@@ -1,0 +1,46 @@
+# 账户分组配置（report-web 只读报表门户专用）— 示例文件
+# 版本：1
+#
+# 以 Firefly account ID 为键，账户改名不影响分类。
+#
+# ⚠️ 这是公开仓库自带的**示例映射**，ID 全部为占位值，不对应任何真实账户。
+# 在你自己的 Firefly III 实例上部署时，必须用该实例的真实 account ID
+# 重新生成本文件（例如按 Firefly role + 账户名称生成候选后人工复核）。
+# 加载器规则：键必须是字符串 ID、值必须是下方声明过的分组、重复键直接报错；
+# 未配置的启用账户会进入 pending（接口照常返回并带 warning）。
+
+version: 1
+
+asset_groups:
+  cash: 现金
+  bank: 银行及电子钱包
+  investments: 投资
+  receivables: 应收及押金
+  stored_value: 储值资产
+  other_assets: 其他资产
+
+liability_groups:
+  credit_cards: 信用卡
+  consumer_credit: 消费信贷
+  other_liabilities: 其他应付款
+
+# 每个分组给出一个示例账户，演示完整的资产/负债分组结构。
+# 请整体替换为你自己实例的 ID 映射。
+account_groups:
+  # ---- 资产 ----
+  "14": cash            # 示例：现金钱包
+  "6": bank             # 示例：银行账户 A（停用零余额账户也可显式列出）
+  "7": bank             # 示例：银行账户 B
+  "9": bank             # 示例：银行账户 C
+  "105": bank           # 示例：银行账户 D
+  "10": investments     # 示例：券商账户
+  "51": receivables     # 示例：应收/押金
+  "40": stored_value    # 示例：储值余额
+  "126": other_assets   # 示例：迁移清算账户（include_net_worth 由 Firefly 侧标记）
+
+  # ---- 负债 ----
+  "4": credit_cards     # 示例：信用卡 A
+  "33": credit_cards    # 示例：信用卡 B（零余额外币卡）
+  "5": consumer_credit  # 示例：消费信贷
+  "121": consumer_credit
+  "69": other_liabilities

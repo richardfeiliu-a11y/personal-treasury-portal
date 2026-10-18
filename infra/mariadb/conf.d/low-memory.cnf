@@ -1,0 +1,26 @@
+# Firefly III low-memory MariaDB configuration
+# Optimized for personal single-user use on low-memory servers
+
+[mysqld]
+# InnoDB buffer pool - primary memory consumer
+innodb_buffer_pool_size = 128M
+innodb_log_buffer_size = 8M
+
+# Connection limits
+max_connections = 20
+thread_cache_size = 4
+table_open_cache = 200
+table_definition_cache = 200
+
+# Temp tables
+tmp_table_size = 16M
+max_heap_table_size = 16M
+
+# MyISAM/other buffers
+key_buffer_size = 8M
+aria_pagecache_buffer_size = 16M
+
+# Performance
+skip_name_resolve = 1
+innodb_flush_log_at_trx_commit = 2
+sync_binlog = 0

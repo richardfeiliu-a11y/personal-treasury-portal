@@ -1,0 +1,73 @@
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.egg-info/
+.venv/
+venv/
+
+# Data & runtime
+data/*
+!data/raw/
+!data/fixtures/
+backups/
+*.db
+*.db-wal
+*.db-shm
+
+# 测试产物
+.test-results/
+playwright-report/
+htmlcov/
+.coverage
+
+# Secrets (NEVER commit)
+secrets/
+*.asc
+.env
+infra/.env
+
+# OS
+.DS_Store
+._*
+
+# IDE
+.idea/
+.vscode/
+
+# Migration artifacts
+migration/
+outputs/
+.nl-*
+.candidate*
+
+# Env backups and temp files (contain secrets)
+infra/.env.backup.*
+infra/.env.before-*
+infra/.env.tmp.*
+infra/.env.bak*
+*.env.backup*
+compose.yaml.before-*
+
+# local dev venv — never deploy
+.venv-dev/
+
+# report-web 前端构建产物与依赖（package-lock.json 需提交，Docker npm ci 依赖）
+report-web/node_modules/
+node_modules/
+report-web/docs/
+
+# Playwright E2E 运行时产物（每次运行覆盖，不入库）
+test-results/
+report-web/dist/
+report-web/*.tsbuildinfo
+
+# git worktrees
+.worktrees/
+
+# 本地工具状态（不入库：数据库文件、agent 记忆、桌面工具缓存）
+.freebuff/
+.workbuddy/
+.claude/
+.serena/
+.ua/

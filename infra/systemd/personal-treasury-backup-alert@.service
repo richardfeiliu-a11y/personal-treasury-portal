@@ -1,0 +1,8 @@
+[Unit]
+Description=Personal ERP backup alert (%i)
+
+[Service]
+Type=oneshot
+Environment=REPO_ROOT=/opt/personal-treasury
+ExecStart=/opt/personal-treasury/scripts/ops/notify.sh %i
+EnvironmentFile=/etc/personal-treasury/backup.env

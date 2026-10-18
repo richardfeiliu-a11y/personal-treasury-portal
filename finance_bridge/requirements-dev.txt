@@ -1,0 +1,9 @@
+# 测试/开发环境依赖（生产镜像不安装本文件）
+# 用法：pip install -r requirements.txt -r requirements-dev.txt
+# 然后从仓库根目录运行：python -m pytest finance_bridge/tests tests
+
+pytest>=8.0
+pytest-asyncio>=0.23
+respx>=0.21
+# mcp_server.py 按 mcp SDK 1.x 编写；2.x 移除了 mcp.server.fastmcp，必须 <2
+mcp>=1.0,<2

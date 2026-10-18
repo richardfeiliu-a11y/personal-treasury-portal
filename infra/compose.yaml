@@ -1,0 +1,218 @@
+name: personal-treasury
+
+# Docker Compose for Personal Treasury
+# Firefly III + MariaDB + Finance Bridge
+# Image versions pinned 2026-07-25 for reproducible deployments.
+
+services:
+  db:
+    image: mariadb@sha256:628f228f0fd5913a220438693576b29b6fe4dc1fa0a1298c0e98579fae28635f
+    restart: unless-stopped
+    environment:
+      MARIADB_ROOT_PASSWORD: ${DB_ROOT_PASSWORD}
+      MARIADB_DATABASE: ${DB_DATABASE:-firefly}
+      MARIADB_USER: ${DB_USERNAME:-firefly}
+      MARIADB_PASSWORD: ${DB_PASSWORD}
+    volumes:
+      - db_data:/var/lib/mysql
+      - ./mariadb/conf.d:/etc/mysql/conf.d:ro
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+    deploy:
+      resources:
+        limits:
+          memory: 384M
+    networks:
+      - erp-private
+
+  firefly:
+    image: fireflyiii/core@sha256:ae69fdd95cdef9038cd7a460a5aec731f14813973e4f096511d5a4ea9ff0e972
+    restart: unless-stopped
+    environment:
+      - APP_KEY=${APP_KEY}
+      - DB_CONNECTION=mysql
+      - DB_HOST=db
+      - DB_PORT=3306
+      - DB_DATABASE=${DB_DATABASE:-firefly}
+      - DB_USERNAME=${DB_USERNAME:-firefly}
+      - DB_PASSWORD=${DB_PASSWORD}
+      - APP_URL=${APP_URL:-http://127.0.0.1:18080}
+      - TRUSTED_PROXIES=*
+      - TZ=${TZ:-Europe/Berlin}
+      - APP_ENV=${APP_ENV:-production}
+      - STATIC_CRON_TOKEN=${STATIC_CRON_TOKEN}
+    volumes:
+      - firefly_upload:/var/www/html/storage/upload
+    ports:
+      - "127.0.0.1:18080:8080"
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+    deploy:
+      resources:
+        limits:
+          memory: 768M
+    networks:
+      - erp-private
+
+  cron:
+    image: fireflyiii/core@sha256:ae69fdd95cdef9038cd7a460a5aec731f14813973e4f096511d5a4ea9ff0e972
+    restart: unless-stopped
+    depends_on:
+      firefly:
+        condition: service_started
+    entrypoint: ["/bin/bash", "-c"]
+    command:
+      - |
+        while true; do
+          sleep 5
+          if curl -fsS -o /dev/null "http://firefly:8080/api/v1/cron/$(echo ${STATIC_CRON_TOKEN} | tr -d ' ')"; then
+            date -u +%FT%TZ > /tmp/last_cron_success
+            curl -fsS -o /dev/null -X POST -H "Authorization: Bearer ${BRIDGE_INTERNAL_TOKEN}" \
+              -H "Content-Type: application/json" \
+              -d '{"job_name":"firefly_cron","status":"success"}' \
+              "http://bridge:8711/v1/jobs/record" || echo "Failed to record firefly_cron success" >&2
+          else
+            echo "Firefly cron trigger failed" >&2
+            curl -fsS -o /dev/null -X POST -H "Authorization: Bearer ${BRIDGE_INTERNAL_TOKEN}" \
+              -H "Content-Type: application/json" \
+              -d '{"job_name":"firefly_cron","status":"failure","reason":"Firefly cron endpoint failed"}' \
+              "http://bridge:8711/v1/jobs/record" || echo "Failed to record firefly_cron failure" >&2
+          fi
+          sleep 86400
+        done
+    environment:
+      - STATIC_CRON_TOKEN=${STATIC_CRON_TOKEN}
+      - BRIDGE_INTERNAL_TOKEN=${BRIDGE_INTERNAL_TOKEN}
+    healthcheck:
+      test: ["CMD-SHELL", "test -f /tmp/last_cron_success && test $$(( $$(date +%s) - $$(stat -c %Y /tmp/last_cron_success) )) -lt 90000"]
+
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 90s
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+    deploy:
+      resources:
+        limits:
+          memory: 64M
+    networks:
+      - erp-private
+
+  bridge:
+    build:
+      context: ../finance_bridge
+      dockerfile: Dockerfile
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:18711:8711"
+    environment:
+      - APP_ENV=${APP_ENV:-production}
+      - APP_URL=http://127.0.0.1:18711
+      - TZ=${TZ:-Europe/Berlin}
+      - BRIDGE_DATABASE_URL=sqlite:////data/bridge.db
+      - BRIDGE_INTERNAL_TOKEN=${BRIDGE_INTERNAL_TOKEN}
+      - FIREFLY_API_URL=http://firefly:8080/api/v1
+      - FIREFLY_TOKEN=${FIREFLY_TOKEN}
+      - BASE_CURRENCY=${BASE_CURRENCY:-CNY}
+    volumes:
+      - bridge_data:/data
+    depends_on:
+      firefly:
+        condition: service_started
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8711/healthz')"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+    deploy:
+      resources:
+        limits:
+          memory: 192M
+    networks:
+      - erp-private
+
+  # 只读报表门户：Nginx + React 静态文件，不映射公网端口（实施文档 §7/§8）
+  report-web:
+    build:
+      context: ../report-web
+      dockerfile: Dockerfile
+    restart: unless-stopped
+    environment:
+      - BRIDGE_INTERNAL_TOKEN=${BRIDGE_INTERNAL_TOKEN}
+    depends_on:
+      bridge:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "wget", "-q", "-O", "-", "http://127.0.0.1:8080/healthz"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+    deploy:
+      resources:
+        limits:
+          memory: 64M
+    networks:
+      - erp-private
+
+  # Cloudflare Tunnel：token 未配置前不启动（profile=tunnel），避免空 token 崩溃循环。
+  # 在服务器写入 CLOUDFLARE_TUNNEL_TOKEN 后，用
+  #   docker compose -f /opt/personal-treasury/infra/compose.yaml --profile tunnel up -d cloudflared
+  # 启动（实施文档 §8）。
+  cloudflared:
+    image: cloudflare/cloudflared:2026.7.3@sha256:e39ee8da81ad5e05d77f38d2f51c60ca51bf2a8450ac3abab50c17fdb91d91bf
+    restart: unless-stopped
+    profiles: ["tunnel"]
+    command: tunnel --no-autoupdate run
+    environment:
+      - TUNNEL_TOKEN=${CLOUDFLARE_TUNNEL_TOKEN}
+    depends_on:
+      report-web:
+        condition: service_started
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+    deploy:
+      resources:
+        limits:
+          memory: 128M
+    networks:
+      - erp-private
+
+volumes:
+  db_data:
+    external: true
+    name: infra_db_data
+  bridge_data:
+    external: true
+    name: infra_bridge_data
+  firefly_upload:
+    external: true
+    name: infra_firefly_upload
+
+networks:
+  erp-private:
+    driver: bridge

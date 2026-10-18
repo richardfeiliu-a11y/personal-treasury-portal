@@ -1,0 +1,77 @@
+# report-web 网关：只代理白名单报表 GET 接口，SPA 静态托管（实施文档 §7）
+
+# WP10/R09：脱敏访问日志。本文件位于 /etc/nginx/conf.d/（http 上下文内），
+# 可安全声明 log_format。字段仅含：uri（不含 query string，敏感参数不落盘）、
+# status、request 时间、upstream 耗时、bytes、request_id（nginx 1.11+ 内置，
+# 可与 Bridge access log 的 request_id 关联）；刻意不记录 $args/$request_body。
+log_format treasury_sanitized 'route=$uri status=$status '
+                              'duration=$request_time upstream=$upstream_response_time '
+                              'bytes=$body_bytes_sent request_id=$request_id';
+
+server {
+    listen 8080;
+    server_name _;
+
+    access_log /var/log/nginx/access.log treasury_sanitized;
+    # 官方镜像默认 root 是相对路径（/etc/nginx/html），必须显式声明静态目录
+    root /usr/share/nginx/html;
+
+    # 入口认证已移至 Cloudflare Access（One-time PIN 邮件验证码）：
+    # Cloudflare 边缘先拦截并完成 OTP 登录，通过后才把请求转发到本 Nginx。
+    # 因此 Nginx 不再配置 Basic Auth，也不生成/依赖 htpasswd。
+    # 注意：保持本容器只监听 8080 且不映射公网端口，源站仅经 Tunnel 可达。
+
+    # 安全响应头（各 location 也要 include，见 security_headers.conf 注释）
+    include /etc/nginx/security_headers.conf;
+
+    # 健康检查（供 compose healthcheck 使用）
+    location = /healthz {
+        access_log off;
+        add_header Content-Type "text/plain";
+        # /healthz 不返回业务数据，供 compose healthcheck 探测真实前端资源。
+        # 不再硬编码 200：改为探测真实前端资源（SPA 入口 index.html）。
+        # 静态文件缺失/未挂载（构建失败、卷损坏、镜像不完整）时返回 404，
+        # 健康检查即失败，避免"容器活着但前端是空的"仍然绿灯。
+        try_files /index.html =404;
+    }
+
+    # SPA 路由回退：HTML 使用 no-store
+    location / {
+        include /etc/nginx/security_headers.conf;
+        try_files $uri /index.html;
+        add_header Cache-Control "no-store" always;
+    }
+
+    # 带 hash 的静态资源长期缓存（生产构建关闭 source map）
+    location ~* \.(?:js|css|png|svg|woff2?)$ {
+        include /etc/nginx/security_headers.conf;
+        expires 30d;
+        add_header Cache-Control "public, max-age=2592000, immutable";
+        try_files $uri =404;
+    }
+
+    # API 白名单：仅代理以下只读报表 GET 接口，其他 /api 一律 404。
+    # P0-P2 扩展：web/ 前缀下的 fx-attribution /
+    # spending-trends / currency-exposure / transactions / anomalies
+    # （roadmap P0-1→P2-2；web/ 避免与 Hermes 接口同名路由冲突）。
+    # expense-breakdown（2026-10-16 门户化）：只读 GET，Top N 截断视图，不用于对账。
+    location ~ ^/api/reports/(personal-balance-sheet|net-worth-trend|income-statement|account-balances|expense-breakdown|web/(fx-attribution|spending-trends|currency-exposure|transactions|anomalies))$ {
+        include /etc/nginx/security_headers.conf;
+        limit_except GET HEAD {
+            deny all;   # 非 GET/HEAD 一律 403
+        }
+        # 用 rewrite + 无 URI 的 proxy_pass，避免 proxy_pass 带变量触发运行时
+        # resolver 解析（容器内无 resolver 会 502）
+        rewrite ^/api/reports/(.+)$ /v1/reports/$1 break;
+        proxy_pass http://bridge:8711;
+        proxy_set_header Host $host;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+        proxy_set_header Authorization "Bearer ${BRIDGE_INTERNAL_TOKEN}";
+        add_header Cache-Control "no-store" always;
+    }
+
+    location /api/ {
+        return 404;
+    }
+}

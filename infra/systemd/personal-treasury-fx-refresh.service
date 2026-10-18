@@ -1,0 +1,20 @@
+[Unit]
+Description=Refresh Personal Treasury ECB FX reference rates
+# 2026-09-22：本 unit 原仅存在于生产 /etc/systemd/system/（手工安装，未入仓、
+# 未登记 runtime-entrypoints.json），导致 check_runtime_entrypoints.py 无法覆盖
+# 它 —— 而它恰是 2026-09-22 静默失败的那个任务（审计 F-00 / AUD-27）。
+# 入仓后由检查器与部署基线共同看管。
+#
+# 与 patrol 的关系：两者原先都在 18:00 Berlin 触发，巡逻在刷新完成前就读
+# freshness，因而系统性看到「上一次」状态（AUD-26）。本 unit 保持原触发时刻以
+# 不改动既有调度语义，竞态由 patrol 侧的显式等待/依赖处理。
+Wants=network-online.target docker.service
+After=network-online.target docker.service
+
+[Service]
+Type=oneshot
+WorkingDirectory=/opt/personal-treasury
+ExecStart=/usr/bin/docker compose -f /opt/personal-treasury/infra/compose.yaml exec -T bridge python -m finance_bridge.scripts.refresh_fx_rates
+TimeoutStartSec=120
+StandardOutput=journal
+StandardError=journal

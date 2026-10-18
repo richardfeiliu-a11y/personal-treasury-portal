@@ -1,0 +1,77 @@
+#!/usr/bin/env bash
+# backup-receive — Remote backup receiver for Personal ERP.
+# Deployed on the BACKUP SERVER at /usr/local/bin/backup-receive
+# Owned by root:root 0755. Source server cannot modify this file.
+#
+# Actions:
+#   put <run-id> <filename> <expected-sha256>   — receive file via stdin
+#   finalize <run-id> <manifest-sha256>         — mark run as complete
+set -euo pipefail
+
+ACTION="${1:-}"
+INBOX="/var/backups/personal-treasury/inbox"
+MAX_FILE_SIZE=524288000  # 500MB
+
+case "$ACTION" in
+  put)
+    RUN_ID="${2:-}"; FILENAME="${3:-}"; EXPECTED_SHA="${4:-}"
+
+    # Strict parameter validation
+    [[ "$RUN_ID" =~ ^[0-9]{8}_[0-9]{6}$ ]] || { echo "BAD_RUN_ID"; exit 1; }
+    [[ "$FILENAME" =~ ^[A-Za-z0-9][A-Za-z0-9._-]{0,127}$ ]] || { echo "BAD_FILENAME"; exit 1; }
+    [ "$FILENAME" = "." ] && { echo "BAD_FILENAME"; exit 1; }
+    [ "$FILENAME" = ".." ] && { echo "BAD_FILENAME"; exit 1; }
+    [[ "$EXPECTED_SHA" =~ ^[0-9a-f]{64}$ ]] || { echo "BAD_SHA"; exit 1; }
+
+    TARGET="${INBOX}/${RUN_ID}/${FILENAME}"
+    PARTIAL="${TARGET}.partial"
+    mkdir -p "${INBOX}/${RUN_ID}"
+
+    # Reject overwrite of existing final file
+    [ -f "$TARGET" ] && { echo "EXISTS"; exit 1; }
+
+    # Stream stdin to .partial with size limit via ulimit
+    # ulimit -f is in 1024-byte blocks
+    (
+        ulimit -f $(( MAX_FILE_SIZE / 1024 + 1 ))
+        cat > "$PARTIAL"
+    ) || { rm -f "$PARTIAL"; echo "SIZE_EXCEEDED"; exit 1; }
+
+    # Verify SHA-256
+    ACTUAL_SHA=$(sha256sum "$PARTIAL" | cut -d' ' -f1)
+    if [ "$ACTUAL_SHA" != "$EXPECTED_SHA" ]; then
+        rm -f "$PARTIAL"
+        echo "SHA256_MISMATCH"
+        exit 1
+    fi
+
+    # Atomic rename
+    mv "$PARTIAL" "$TARGET"
+    echo "OK $(stat -c%s "$TARGET")"
+    ;;
+
+  finalize)
+    RUN_ID="${2:-}"; MANIFEST_SHA="${3:-}"
+
+    [[ "$RUN_ID" =~ ^[0-9]{8}_[0-9]{6}$ ]] || { echo "BAD_RUN_ID"; exit 1; }
+    [[ "$MANIFEST_SHA" =~ ^[0-9a-f]{64}$ ]] || { echo "BAD_SHA"; exit 1; }
+
+    RUN_DIR="${INBOX}/${RUN_ID}"
+    [ -d "$RUN_DIR" ] || { echo "NO_RUN_DIR"; exit 1; }
+
+    # Verify manifest exists and hash matches
+    MANIFEST_FILE="${RUN_DIR}/manifest.json.gpg"
+    [ -f "$MANIFEST_FILE" ] || { echo "NO_MANIFEST"; exit 1; }
+    ACTUAL=$(sha256sum "$MANIFEST_FILE" | cut -d' ' -f1)
+    [ "$ACTUAL" = "$MANIFEST_SHA" ] || { echo "MANIFEST_MISMATCH"; exit 1; }
+
+    # Create COMPLETE marker
+    echo "$(date -Iseconds)" > "${RUN_DIR}/COMPLETE"
+    echo "FINALIZED"
+    ;;
+
+  *)
+    echo "UNKNOWN_ACTION"
+    exit 1
+    ;;
+esac

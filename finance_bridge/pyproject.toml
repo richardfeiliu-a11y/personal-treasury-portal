@@ -1,0 +1,26 @@
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+asyncio_mode = "auto"
+addopts = "-v --tb=short"
+
+[tool.ruff]
+line-length = 100
+target-version = "py310"
+
+[tool.ruff.lint]
+# 以下规则与本项目的显式设计冲突，统一豁免（理由见各条）：
+# - BLE001：防御性 fail-closed 宽 `except Exception` 是审计确认的显式设计（过账/报表 fail-closed）
+# - S110/S112：非关键路径 best-effort try/except pass/continue
+# - DTZ001/DTZ007/DTZ011：日历日期运算用 naive datetime/date 是正确语义（仅时间戳才需要 tz）
+# - B008：FastAPI `Query()`/`Depends()` 作为参数默认值是官方惯例
+# - PYI034：`target-version` 为 py310，无 `typing.Self`（3.11+ 才有）
+ignore = [
+  "B008",
+  "BLE001",
+  "S110",
+  "S112",
+  "DTZ001",
+  "DTZ007",
+  "DTZ011",
+  "PYI034",
+]

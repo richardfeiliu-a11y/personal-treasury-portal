@@ -1,0 +1,4 @@
+interface:
+  display_name: "个人财务操作员"
+  short_description: "通过受控工具管理 Firefly 记账与个人 ERP 运维"
+  default_prompt: "使用个人财务操作员规则处理记账、查询或受控系统运维请求。"

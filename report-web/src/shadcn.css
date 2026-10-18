@@ -1,0 +1,613 @@
+/*
+ * Tailwind v4 + shadcn 样式入口（第一轮：基础设施，与旧 styles.css 共存）。
+ *
+ * 共存策略：
+ * 1. 【刻意不引入 preflight】——只拆分为 theme（设计 token）+ utilities（原子类），
+ *    避免 Tailwind 的基础重置（标题字号、列表、按钮背景、img display、全局 border
+ *    颜色/默认边框宽度等）破坏现有由 styles.css 驱动的页面。
+ * 2. 不写作用于 * / body 的 @layer base 全局规则，页面底色与文字仍由旧 CSS 控制。
+ * 3. 品牌深绿映射进 shadcn 语义变量（primary/ring/secondary/muted…）。
+ * 4. 暗色复用项目既有机制 [data-theme="dark"]（而非 shadcn 默认的 .dark）。
+ */
+@import "tailwindcss/theme";
+@import "tailwindcss/utilities";
+@import "tw-animate-css";
+
+/* 让 Tailwind 的 dark: 变体响应项目既有的 data-theme="dark" 暗色机制 */
+@custom-variant dark (&:where([data-theme="dark"], [data-theme="dark"] *));
+
+@theme inline {
+  --radius-sm: calc(var(--radius) - 4px);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 4px);
+  --radius-2xl: calc(var(--radius) + 8px);
+  --radius-3xl: calc(var(--radius) + 12px);
+  --radius-4xl: calc(var(--radius) + 16px);
+
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+  --color-chart-1: var(--chart-1);
+  --color-chart-2: var(--chart-2);
+  --color-chart-3: var(--chart-3);
+  --color-chart-4: var(--chart-4);
+  --color-chart-5: var(--chart-5);
+  --color-sidebar: var(--sidebar);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar-primary: var(--sidebar-primary);
+  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+  --color-sidebar-accent: var(--sidebar-accent);
+  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+  --color-sidebar-border: var(--sidebar-border);
+  --color-sidebar-ring: var(--sidebar-ring);
+}
+
+/* ===== 浅色：品牌绿映射 ===== */
+:root {
+  --radius: 0.625rem;
+
+  /* 页面底 / 前景 */
+  --background: #fafbfc; /* --page-bg */
+  --foreground: #0b2e27; /* --green-900，品牌深墨绿 */
+  --card: #ffffff; /* --surface */
+  --card-foreground: #0b2e27;
+  --popover: #ffffff;
+  --popover-foreground: #0b2e27;
+
+  /* 强语义文本 / 淡色表面（明色值，WCAG AA 校准 2026-10-09）。
+   * 暗色值见 [data-theme="dark"]；组件一律引用这些 token，禁止再写死 hex。
+   * 对比度依据：正常文本 ≥4.5:1。 */
+  --delta-positive: #157a5a; /* 白卡 5.30 · #fafbfc 5.11 */
+  --delta-negative: #a94a42; /* 白卡 5.61 · 淡红底 #fbeae8 4.82（旧 #bc564e 4.59/3.94 不足） */
+  --delta-warning: #855c22;  /* 白卡 5.91 · 淡金底 #fbf3e2 5.36（旧 #9a6a2a 4.70/4.26 不足） */
+  --delta-neutral: #68707d;  /* 白卡 5.00 · #fafbfc 4.82（旧 #8a93a0 3.11 不足） */
+  --surface-tint-danger: #fbeae8;
+  --surface-tint-warning: #fbf3e2;
+  --surface-tint-warning-hover: #fae9d2;
+  --surface-tint-neutral: #eff1f4;
+  --hairline: #e7eaed;
+  --text-secondary: #596273; /* 次级正文，白卡 6.14 */
+  --text-caption: #6b7280;   /* 说明文字，白卡 4.83 · #fafbfc 4.67 */
+
+  /* ===== 报表语义角色（2026-10-18 由旧 green-/neutral- 轨迁移，值原样搬运）=====
+   * 命名按用途而非色阶。每个 token 的亮/暗值与原旧名逐一对应，迁移零视觉变化；
+   * 旧名 × 角色的完整对照见本文件顶部注释与 docs 里的迁移记录。
+   * 少数旧名被跨角色复用（如 --neutral-50 既做 hover 底又做反白文字），
+   * 这类用法各自拆出独立 token，避免角色混用。 */
+  /* 文字 */
+  --text-strong: #111827;      /* 原 --neutral-950 · 标题 */
+  --text-body: #1f2937;        /* 原 --neutral-900 · 正文 */
+  --text-tertiary: #2d3540;    /* 原 --neutral-800 */
+  --text-muted: #4b5563;       /* 原 --neutral-700 · 次级文字 */
+  --text-subtle: #596273;      /* 原 --neutral-600 */
+  --text-faint: #6b7280;       /* 原 --neutral-500 · 说明文字 */
+  --text-placeholder: #9ca3af; /* 原 --neutral-400 · 占位 */
+  --text-disabled: #d1d5db;    /* 原 --neutral-300 · 禁用文字 */
+  --text-inverse: #f9fafb;     /* 原 --neutral-50 · 深底反白文字 */
+  /* 表面 */
+  --surface-subtle: #f3f4f6;   /* 原 --neutral-100 · 骨架/轨道/标签底 */
+  --surface-hover: #f9fafb;    /* 原 --neutral-50 · hover 底 */
+  --table-header-bg: #f9fafb;  /* 原 --neutral-50 · 表头底 */
+  --surface-inset: #e5e7eb;    /* 原 --neutral-200 · 内嵌底 */
+  --surface-inverse: #1f2937;  /* 原 --neutral-900 · 深色浮层底（Toast） */
+  --surface-shimmer: #eceff2;  /* 原 --neutral-150 · 骨架高光 */
+  --surface-raised: #f9fafb;   /* 原 --neutral-50 · 静态浅面板底（comp-offset） */
+  --data-neutral: #9ca3af;     /* 原 --neutral-400 · 中性数据色（构成/异常指示） */
+  --data-neutral-strong: #d1d5db; /* 原 --neutral-300 · 中性数据色（构成条待定段） */
+  /* 边框 */
+  --border-subtle: #eceff2;    /* 原 --neutral-150 */
+  --border-emphasis: #d1d5db;  /* 原 --neutral-300。注意：不可叫 --border-strong ——
+                               * 该名已被既有的「border 简写」token 占用（值为 "1px solid …"），
+                               * 用作颜色会变成非法声明。 */
+  --divider: #e5e7eb;          /* 原 --neutral-200 · 分隔线 */
+  /* 品牌绿 */
+  --brand-accent: #28a06f;     /* 原 --green-500 · 强调边框/填充 */
+  --brand-text: #16624e;       /* 原 --green-700 · 品牌绿文字 */
+  --brand-deep: #114237;       /* 原 --green-800 */
+  --brand-tint: #f5fbf8;       /* 原 --green-50 · 品牌淡底 */
+  --brand-border: #6fbe9d;     /* 原 --green-300 */
+
+  /* 主色：品牌深绿 #157A5a（白字对比 5.3:1，达 AA） */
+  --primary: #157a5a; /* --green-600 */
+  --primary-foreground: #ffffff;
+
+  /* 次级 / 静音 / 强调：浅绿倾向 */
+  --secondary: #eaf6f0; /* --green-100 */
+  --secondary-foreground: #157a5a;
+  --muted: #f3f4f6; /* --neutral-100 */
+  --muted-foreground: #596273; /* --neutral-600 */
+  --accent: #eaf6f0; /* --green-100 */
+  --accent-foreground: #0b2e27;
+
+  --destructive: #dc2626; /* --danger-600 */
+
+  --border: #e5e7eb; /* --neutral-200 */
+  --input: #e5e7eb;
+  --ring: #157a5a; /* 焦点环用品牌绿 */
+
+  /* shadcn chart 占位（图表本身仍由 ECharts 主题驱动，这里仅兜底） */
+  --chart-1: #28a06f;
+  --chart-2: #157a5a;
+  --chart-3: #16624e;
+  --chart-4: #0b2e27;
+  --chart-5: #cfe9dd;
+
+  /* 侧栏：浅色兜底（项目实际侧栏为深色渐变，见 styles.css；此处仅 shadcn 组件值） */
+  --sidebar: #ffffff;
+  --sidebar-foreground: #0b2e27;
+  --sidebar-primary: #157a5a;
+  --sidebar-primary-foreground: #ffffff;
+  --sidebar-accent: #eaf6f0;
+  --sidebar-accent-foreground: #0b2e27;
+  --sidebar-border: #e5e7eb;
+  --sidebar-ring: #157a5a;
+}
+
+/* ===== 暗色：复用项目 [data-theme="dark"] 机制 ===== */
+[data-theme="dark"] {
+  --background: #08241e; /* --green-950 */
+  --foreground: #f5fbf8; /* --green-50 */
+  --card: #0f382f; /* --green-850 */
+  --card-foreground: #f5fbf8;
+  --popover: #0f382f;
+  --popover-foreground: #f5fbf8;
+
+  /* 强语义文本 / 淡色表面（暗色值，WCAG AA 校准 2026-10-09）。
+   * 旧迁移把明色 hex 写死，暗色下 #0b2e27/#bc564e/#157a5a 落 #161b22 仅 1.18–3.77。 */
+  --delta-positive: #4fbd8a; /* #161b22 7.40 · 绿调淡面 #1f3533 5.56 */
+  --delta-negative: #f17777; /* #161b22 6.30 · 红调淡面 #392a30 4.94 */
+  --delta-warning: #eaa648;  /* #161b22 8.28 · 金调淡面 #383128 6.13 */
+  --delta-neutral: #9ca3af;  /* #161b22 6.81 · 中性淡面 #282e35 5.40（旧 #8a93a0 5.57/#f3f6f4… ） */
+  --surface-tint-danger: #392a30;
+  --surface-tint-warning: #383128;
+  --surface-tint-warning-hover: #453a2a;
+  --surface-tint-neutral: #282e35;
+  --hairline: #2a313c;
+  --text-secondary: #9aa6b2; /* 次级正文，#161b22 6.98 */
+  /* 说明文字。原 #8b949e 按旧 GitHub 底 #161b22 校准（5.62），95c8f26 换墨绿底后
+   * 落卡片 #0f382f 只有 4.20，低于 AA 4.5（2026-10-17 axe 实测 14 处 serious 违规）。
+   * 提到 #929aa3：卡片 4.53 · 页面底 #08241e 5.75，明暗两种底都达标。 */
+  --text-caption: #929aa3;
+
+  /* 报表语义角色 · 暗色档（与上方亮色同名，值取自旧轨暗色；未列出的沿用亮色） */
+  --text-strong: #f5fbf8;
+  --text-body: #f5fbf8;
+  --text-tertiary: #9aa6b2;
+  --text-muted: #929aa3;
+  --text-subtle: #929aa3;
+  --text-faint: #9ca3af;
+  --text-placeholder: #3d6b5c;
+  --text-disabled: #1d4a3e;
+  --text-inverse: #f9fafb;
+  --surface-subtle: #0f382f;
+  /* 修正：旧 --neutral-50 漏了暗色档，导致 hover 在暗色下闪出近白 #f9fafb。
+   * 这里给 --surface-hover 一个真正的暗色值（与侧栏 hover 的白色叠加写法一致）。 */
+  --surface-hover: rgba(255, 255, 255, 0.06);
+  --table-header-bg: #0f382f;
+  --surface-inset: #164339;
+  --surface-inverse: #f5fbf8;
+  --surface-shimmer: #123d33;
+  --surface-raised: #123d33;
+  --data-neutral: #3d6b5c;
+  --data-neutral-strong: #1d4a3e;
+  --border-subtle: #123d33;
+  --border-emphasis: #1d4a3e;
+  --divider: #164339;
+  --brand-accent: #28a06f;
+  --brand-text: #4fbd8a;
+  --brand-deep: #114237;
+  --brand-tint: #f5fbf8;
+  --brand-border: #3a6f5c;
+
+  /* 暗色主色。原 #28a06f 按旧 GitHub 底 #161b22 校准（6.12 达标），95c8f26 换墨绿底后
+   * 作为文字落卡片 #0f382f 仅 3.90、落 --muted #114237 仅 3.42，均低于 AA 4.5
+   * （2026-10-17 axe 实测 82 处 serious 违规，涉及移动底栏/tab 芯片/绿色链接等）。
+   * 提到 #4fbd8a（与 --delta-positive 同值）：卡片 5.52 · muted 4.83 · 页面底 7.01
+   * 全部达标；按钮用深字 --primary-foreground(#08241e) 落其上 7.01，比原先更稳。 */
+  --primary: #4fbd8a;
+  --primary-foreground: #08241e;
+
+  --secondary: #114237; /* --green-800 */
+  --secondary-foreground: #f5fbf8;
+  --muted: #114237;
+  --muted-foreground: #9ca3af; /* --neutral-400 */
+  --accent: #16624e; /* --green-700 */
+  --accent-foreground: #f5fbf8;
+
+  --destructive: #f43f5e; /* --danger-500 */
+
+  --border: rgb(255 255 255 / 12%);
+  --input: rgb(255 255 255 / 16%);
+  --ring: #4fbd8a;
+
+  /* 图表色阶保持 #28a06f 起手：chart-1 是数据色（面积/线/柱），非文字，不适用 AA
+   * 文本 4.5 阈值；ECharts 主题另有 tooltip/axis 配色，与 UI 主色解耦。 */
+  --chart-1: #28a06f;
+  --chart-2: #4fbd8a;
+  --chart-3: #7fd0ac;
+  --chart-4: #cfe9dd;
+  --chart-5: #16624e;
+
+  /* 深色侧栏 */
+  --sidebar: #0b2e27;
+  --sidebar-foreground: #f5fbf8;
+  --sidebar-primary: #4fbd8a;
+  --sidebar-primary-foreground: #08241e;
+  --sidebar-accent: #16624e;
+  --sidebar-accent-foreground: #f5fbf8;
+  --sidebar-border: rgb(255 255 255 / 12%);
+  --sidebar-ring: #4fbd8a;
+}
+
+/* =========================================================================
+ * 旧 styles/tokens.css 设计变量（生成的 utility 以 var(--…) 引用，保持级联）
+ * ========================================================================= */
+/*
+ * 旧 token 是兼容别名，值一律引用上方的语义层（--background/--foreground/--card/
+ * --primary/--muted/--border），不再各写一份 hex。这样明暗两套主题只在语义层定义一次，
+ * 旧名字和新名字解析到同一套值，不会再出现暗色下同义不同值的漂移。
+ * 语义层没有对应角色的档位（中性色阶、品牌绿阶、状态色）保留字面值。
+ */
+:root {
+
+
+  --success-600: #16a34a;
+  --success-500: #10b981;
+  --success-100: #dcfce7;
+  --success-700: #15803d;
+  --danger-600:  #dc2626;
+  --danger-500:  #f43f5e;
+  --danger-200:  #f3bab5;
+  --danger-100:  #fee2e2;
+  --danger-700:  #b91c1c;
+  --danger-50:   #fef2f2;
+  --warning-600: #d97706;
+  --warning-500: #d97706;
+  --warning-100: #fef3c7;
+  --warning-800: #92400e;
+  --info-600: #2563eb;
+  --info-100: #dbeafe;
+
+  --chart-primary-green: #2f8f68;
+  --chart-investment:    #d9a441;
+  --chart-blue:          #5b8def;
+  --chart-purple:        #7b61c8;
+  --chart-muted-teal:    #3f8b7a;
+  --chart-grey:          #9ca3af;
+  --chart-expense-red:   #d95c59;
+
+  /* 卡片边框走浅一档（default 原值 #e5e7eb 降为 soft 的位置），减少卡片的框线感。 */
+  --border-default: 1px solid #eceff2;
+  --border-soft:    1px solid #f3f4f6;
+  --border-strong:  1px solid #e5e7eb;
+  --border-dark:    1px solid rgba(255, 255, 255, 0.08);
+
+  --shadow-card:    0 1px 2px rgba(16, 24, 40, 0.03), 0 4px 12px rgba(16, 24, 40, 0.035);
+  --shadow-hover:   0 6px 18px rgba(16, 24, 40, 0.07);
+  --shadow-overlay: 0 16px 40px rgba(16, 24, 40, 0.14);
+  --shadow-family-overlay: 0 20px 25px -5px rgba(0, 0, 0, 0.3);
+  --shadow-sm: 0 1px 2px rgba(16, 24, 40, 0.06);
+  --shadow-md: 0 4px 12px rgba(16, 24, 40, 0.1);
+  --shadow-lg: 0 12px 32px rgba(16, 24, 40, 0.16);
+
+  --overlay-obsidian: rgba(11, 15, 25, 0.6);
+
+  --radius-sm: 8px;
+  --radius-md: 10px;
+  --radius-control: 10px;
+  --radius-card: 12px;
+  --radius-hero: 14px;
+  --radius-pill: 999px;
+  --radius-lg: 16px;
+
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 20px;
+  --space-6: 24px;
+  --space-7: 28px;
+  --space-8: 32px;
+  --space-10: 40px;
+  --space-12: 48px;
+
+  --font-family-base: "Inter Variable", "Inter", "PingFang SC", "Noto Sans SC", "Microsoft YaHei", system-ui, -apple-system, sans-serif;
+  --font-family-mono: "IBM Plex Mono", "SF Mono", "Cascadia Code", "Consolas", monospace;
+  --type-display-amount: 700 44px/52px var(--font-family-base);
+  --type-page-title: 700 24px/32px var(--font-family-base);
+  --type-section-title: 650 16px/24px var(--font-family-base);
+  --type-kpi-value: 700 22px/30px var(--font-family-base);
+  --type-card-value: 700 20px/28px var(--font-family-base);
+  --type-body: 400 14px/22px var(--font-family-base);
+  --type-label: 500 13px/20px var(--font-family-base);
+  --type-caption: 400 12px/18px var(--font-family-base);
+  --type-caption-line-height: 18px;
+  --type-title: 600 14px/22px var(--font-family-base);
+
+  --sidebar-width: 216px;
+  --sidebar-width-compact: 200px;
+  --topbar-height: 64px;
+  --topbar-actual-height: 64px;
+  --page-padding-x: 32px;
+  --grid-gap: 20px;
+  --card-padding: 20px;
+  --card-padding-mobile: 16px;
+  --control-height: 40px;
+  --touch-target: 44px;
+  --z-popover: 40;
+
+  --sidebar-bg: linear-gradient(180deg, #0b2e27 0%, #0d332b 100%);
+  --hero-bg: linear-gradient(135deg, #0b2e27 0%, #114237 52%, #16624e 100%);
+
+  --ease-standard: cubic-bezier(0.2, 0.8, 0.2, 1);
+  --duration-hover: 130ms;
+  --duration-menu: 150ms;
+  --duration-chart: 320ms;
+  --duration-modal: 180ms;
+
+  --focus-ring: 0 0 0 3px rgba(40, 160, 111, 0.5);
+
+  --topbar-bg: rgba(255, 255, 255, 0.72);
+  --glass-bg: rgba(255, 255, 255, 0.72);
+  --glass-border: 1px solid rgba(255, 255, 255, 0.45);
+  --glass-blur: blur(12px);
+  --glass-solid-fallback: var(--card);
+}
+
+[data-theme="dark"] {
+  /* 底色与文字色引用上方语义暗色（--background/#08241e、--card/#0f382f、--foreground），
+   * 不再单独写 hex，避免与语义层漂移。中性色阶里没有语义对应的档位保留墨绿系字面值。 */
+  /* 原 #84909a 按旧 GitHub 底校准（#161b22 5.02），换墨绿底后落卡片 #0f382f 仅 3.96，
+   * 低于 AA（金额币种后缀等 20 处实测违规）。提到 #929aa3：卡片 4.53 · 页面底 5.75。 */
+
+  --border-default: 1px solid #1d4a3e;
+  --border-soft:    1px solid #164339;
+  --border-strong:  1px solid #3d6b5c;
+  --border-dark:    1px solid rgba(255, 255, 255, 0.06);
+
+  --success-100: #21262d;
+  --success-600: #3fb27f;
+  --success-700: #2ebd59;
+  --warning-100: #21262d;
+  --warning-600: #eaa648;
+  --warning-800: #eaa648;
+  --danger-100: #21262d;
+  --danger-600: #f17777;
+  --danger-700: #f17777;
+  --success-500: #34d399;
+  --warning-500: #fbbf24;
+  --danger-500:  var(--destructive);
+  --info-100: #21262d;
+  --info-600: #79b8ff;
+
+  --shadow-card:    0 1px 3px rgba(0, 0, 0, 0.3), 0 4px 12px rgba(0, 0, 0, 0.25);
+  --shadow-hover:   0 6px 18px rgba(0, 0, 0, 0.4);
+  --shadow-overlay: 0 16px 40px rgba(0, 0, 0, 0.5);
+  --shadow-family-overlay: 0 20px 25px -5px rgba(0, 0, 0, 0.4);
+
+  --topbar-bg: rgba(8, 36, 30, 0.72);
+  --glass-bg: rgba(8, 36, 30, 0.72);
+  --glass-border: 1px solid rgba(255, 255, 255, 0.06);
+  --glass-solid-fallback: var(--card);
+
+  --focus-ring: 0 0 0 3px rgba(40, 160, 111, 0.35);
+
+  --sidebar-bg: linear-gradient(180deg, #0b2e27 0%, #114237 100%);
+  --hero-bg: linear-gradient(135deg, #0b2e27 0%, #114237 52%, #16624e 100%);
+}
+
+/* 页面横向内边距随视口收窄（迁自 tokens.css） */
+@media (max-width: 1439px) { :root { --page-padding-x: 24px; } }
+@media (max-width: 1199px) { :root { --page-padding-x: 20px; } }
+
+/* 移动端类型阶梯（迁自 tokens.css） */
+@media (max-width: 767px) {
+  :root {
+    --type-display-amount: 700 32px/40px var(--font-family-base);
+    --type-page-title: 700 22px/30px var(--font-family-base);
+    --type-kpi-value: 700 20px/28px var(--font-family-base);
+    --type-card-value: 700 18px/26px var(--font-family-base);
+  }
+}
+
+/* 全局基础规则（迁自旧 styles.css 顶部） */
+@layer base {
+  *, *::before, *::after { box-sizing: border-box; }
+  html, body, #root { height: 100%; }
+  html, body {
+    margin: 0;
+    min-width: 320px;
+    background: var(--background);
+    color: var(--text-body);
+    font-family: var(--font-family-base);
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    text-rendering: optimizeLegibility;
+  }
+  body { line-height: 1.5714; }
+  a { color: inherit; }
+  /* 未引入 Tailwind preflight，浏览器 UA 的按钮默认底色（macOS ButtonFace ≈ #efefef）
+   * 在暗色下仍是浅灰，落在深色表面会造成对比回归；显式置透明，底色由类控制。 */
+  button { font: inherit; cursor: pointer; background-color: transparent; }
+  input, select, textarea { font: inherit; }
+  :focus-visible {
+    outline: none;
+    box-shadow: var(--focus-ring);
+    border-radius: var(--radius-sm);
+  }
+}
+
+/* Keyframes（迁自旧 styles.css） */
+@keyframes shimmer { to { background-position: -200% 0; } }
+@keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+@keyframes slideUp {
+  from { opacity: 0; transform: translateY(8px) scale(0.98); }
+  to   { opacity: 1; transform: translateY(0) scale(1); }
+}
+@keyframes toast-in {
+  from { opacity: 0; transform: translateY(6px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    scroll-behavior: auto !important;
+    transition-duration: 0s !important;
+  }
+}
+
+/* ===== 侧栏激活态：左指示条 + 淡底，图标加粗。底是深色渐变，故用白色透明而非品牌绿。 ===== */
+@layer components {
+  .side-nav-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    height: 40px;
+    padding: 0 12px;
+    border-radius: 8px;
+    color: rgba(255, 255, 255, 0.72);
+    text-decoration: none;
+    font: 500 14px/1 var(--font-family-base);
+    border-left: 3px solid transparent;
+  }
+  .side-nav-item:hover { background: rgba(255, 255, 255, 0.06); color: #fff; }
+  .side-nav-item.is-active {
+    background: rgba(255, 255, 255, 0.1);
+    color: #fff;
+    font-weight: 600;
+    border-left-color: var(--green-400, #5dcaa5);
+  }
+  .side-nav-item.is-active svg { stroke-width: 2.25; }
+}
+
+/* ===== 报表数据表（收敛自 6 处页面的 arbitrary-value 链）=====
+ * 表头 / 单元格 / hover / 暗色覆盖原先各自以 40 余个 arbitrary variant 写在
+ * TransactionsPage、Accounts、SpendingDeviationTable、Trends、FxAttribution、
+ * IncomeExpense 的 <table className> 上（单处 1400–1500 字符）。这里收成一处
+ * 组件类，页面只保留各表自己的布局差异。
+ *
+ * 视觉等价：以下值与收敛前的 computed style 逐一核对（124 个单元格 × 19 个属性
+ * × 明暗两主题，差异 0），未做任何取色改动。
+ * 唯一「刻意保留现状」之处是下边框色：原链写作 border-b-[var(--border-default)]
+ * / border-b-[var(--border-soft)]，而这两个 token 是完整 border 简写
+ * （"1px solid #eceff2"），当颜色用属非法声明会被丢弃，实际落到初始值
+ * currentColor —— 即浅色下表头/单元格下边框取的是各自文字色。此处照现状写成
+ * currentColor，不趁机改色（改色会移动基线，属另一件事）。 */
+@layer components {
+  /* 金额列右对齐、普通文本左对齐（迁移时丢失的全局规则）——保持全局，
+   * 与收敛前一致（未参与收敛的 .data-table 也依赖这条）。 */
+  .data-table thead th.is-num,
+  .data-table tbody td.is-num {
+    text-align: right;
+  }
+  .data-table thead th:not(.is-num),
+  .data-table tbody td:not(.is-num) {
+    text-align: left;
+  }
+
+  /* 以下样式限定在 .data-table-wrap 内。该 wrapper 是 6 张报表数据表（明细/账户/
+   * 趋势币种/趋势分类/汇率归因/收支角色）的既有容器类；composition 的费用分区表
+   * 是裸 .data-table（自带极简样式、无 wrapper），不应被这套报表样式波及。 */
+  .data-table-wrap .data-table {
+    width: 100%;
+    border-collapse: collapse;
+    font: var(--type-body);
+  }
+
+  /* 窄视口：取消最小宽度并改固定布局，避免横向撑破容器 */
+  @media (max-width: 767px) {
+    .data-table-wrap .data-table { min-width: 0; table-layout: fixed; }
+  }
+
+  .data-table-wrap .data-table thead th {
+    position: sticky;
+    top: 0;
+    height: 38px;
+    padding: 12px var(--space-4);
+    background-color: var(--table-header-bg);
+    color: var(--text-subtle);
+    font: 600 12px/1 var(--font-family-base);
+    border-bottom: 1px solid currentColor;
+  }
+
+  .data-table-wrap .data-table tbody td {
+    height: 44px;
+    padding: var(--space-3) var(--space-4);
+    color: var(--text-body);
+    vertical-align: middle;
+    border-bottom: 1px solid currentColor;
+  }
+
+  .data-table-wrap .data-table tbody tr:last-child td { border-bottom-width: 0; }
+  .data-table-wrap .data-table tbody tr:hover td { background-color: var(--surface-hover); }
+
+  /* fx 归因表：首列以外右对齐 + 等宽数字 */
+  .fx-attribution-table .data-table thead th:not(:first-child) {
+    text-align: right;
+    font-variant-numeric: tabular-nums;
+  }
+  .fx-attribution-table .data-table tbody td:not(:first-child) {
+    text-align: right;
+    font-variant-numeric: tabular-nums;
+  }
+
+  /* 暗色覆盖（选择器特异性高于上方基础规则，故生效顺序与原链一致） */
+  [data-theme="dark"] .data-table-wrap .data-table th {
+    background-color: var(--surface-subtle);
+    color: var(--text-muted);
+    border-bottom-color: var(--border-emphasis);
+  }
+  [data-theme="dark"] .data-table-wrap .data-table td {
+    border-bottom-color: var(--divider);
+    color: var(--text-body);
+  }
+
+  /* 窄视口允许长内容断行 */
+  @media (max-width: 767px) {
+    .data-table-wrap .data-table th,
+    .data-table-wrap .data-table td { overflow-wrap: anywhere; }
+  }
+}
+
+/* ===== 首页 40px 控件的 44px 触控命中区（迁移时丢失的伪元素规则）===== */
+@layer components {
+  /* 视觉控件仍是 40px；透明 ::before 把可点击区域扩大到至少 44×44，
+   * 满足移动端触控目标（WCAG 2.5.5 / Apple HIG），不改变视觉尺寸。 */
+  .home-page-action {
+    position: relative;
+  }
+  .home-page-action::before {
+    content: "";
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: max(100%, var(--touch-target));
+    height: max(100%, var(--touch-target));
+    transform: translate(-50%, -50%);
+  }
+}
+
+/* ===== 财务角色语义色（条件钩子类，色值走 token；等价于 Tailwind text-*）===== */
+@layer components {
+  .is-role-income   { color: var(--brand-text); }
+  .is-role-expense  { color: var(--danger-700); }
+  .is-role-debt     { color: var(--info-600); }
+  .is-role-net      { color: inherit; }
+  .is-role-net.is-role-positive { color: var(--success-700); }
+  .is-role-net.is-role-negative { color: var(--danger-700); }
+}

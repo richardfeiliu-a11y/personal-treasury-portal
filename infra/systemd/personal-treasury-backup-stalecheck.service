@@ -1,0 +1,10 @@
+[Unit]
+Description=Check backup staleness
+OnFailure=personal-treasury-backup-alert@%n.service
+
+[Service]
+Type=oneshot
+Environment=REPO_ROOT=/opt/personal-treasury
+ExecStart=/opt/personal-treasury/scripts/ops/stalecheck.sh
+StateDirectory=personal-treasury-backup
+StateDirectoryMode=0700

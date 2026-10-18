@@ -1,0 +1,22 @@
+[Unit]
+Description=Personal ERP daily Feishu digest (generate + deliver, D01 sole scheduler)
+# D01（2026-09-06）：systemd 是日报唯一调度者；禁止在任何 cron/Hermes cron
+# 中重复调度。生成与投递拆为两步、可独立失败：
+#   ExecStart      生成（feishu_digest.py）→ 状态文件 <业务日>.txt
+#   ExecStartPost  投递（deliver_feishu_digest.py）→ 幂等回执
+# ExecStart 失败时 ExecStartPost 不会运行（生成失败不发送）。
+After=docker.service
+Requires=docker.service
+
+[Service]
+Type=oneshot
+WorkingDirectory=/opt/personal-treasury
+Environment=REPO_ROOT=/opt/personal-treasury
+# 从独立 env 读取 BRIDGE_INTERNAL_TOKEN / BRIDGE_BASE_URL / HERMES_BIN / HERMES_HOME
+EnvironmentFile=/etc/personal-treasury/feishu-digest.env
+# systemd 默认 PATH 不含 ~/.local/bin：HERMES_BIN 必须是绝对路径（见 runbook 部署步骤）
+ExecStart=/usr/bin/python3.11 /opt/personal-treasury/scripts/tools/feishu_digest.py
+ExecStartPost=/usr/bin/python3.11 /opt/personal-treasury/scripts/tools/deliver_feishu_digest.py
+UMask=0077
+# 生成（4 次接口调用，各 30s 超时）+ 投递（默认 60s 超时）的总量上限
+TimeoutStartSec=300

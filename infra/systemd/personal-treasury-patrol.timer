@@ -1,0 +1,9 @@
+[Unit]
+Description=Run Personal Treasury patrol every 6 hours (replaces retired watchdog timer)
+
+[Timer]
+OnCalendar=*-*-* 00/6:00:00 Europe/Berlin
+Persistent=true
+
+[Install]
+WantedBy=timers.target

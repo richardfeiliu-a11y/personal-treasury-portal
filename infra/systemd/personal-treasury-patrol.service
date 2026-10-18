@@ -1,0 +1,21 @@
+[Unit]
+Description=Personal Treasury patrol: maintained health-check.sh (D02 sole patrol entry)
+# D02（2026-09-06）：巡检唯一执行入口 = scripts/ops/health-check.sh（维护版，
+# 已并入原 watchdog.sh 的 freshness/必需容器/告警职责）。原
+# personal-treasury-watchdog.service/.timer 在生产由本 unit 替代，受控应用时
+# 必须 stop --now + disable 旧 watchdog timer（不同时启动新旧巡检）。
+# 失败告警由脚本内 hermes send 尽力投递并记入 journal；退出码非 0 即巡检失败。
+After=docker.service
+Requires=docker.service
+
+[Service]
+Type=oneshot
+WorkingDirectory=/opt/personal-treasury
+Environment=REPO_ROOT=/opt/personal-treasury
+# HERMES_BIN 绝对路径（systemd PATH 不含 ~/.local/bin）；与 digest 共用 env 文件
+EnvironmentFile=/etc/personal-treasury/feishu-digest.env
+# 生产环境才允许真实告警投递；本地/开发缺省不发送（防误发）
+Environment=PATROL_ALERT_ENABLED=1
+ExecStart=/usr/bin/env bash /opt/personal-treasury/scripts/ops/health-check.sh
+UMask=0077
+TimeoutStartSec=180

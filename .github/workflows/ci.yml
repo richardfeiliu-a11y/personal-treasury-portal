@@ -1,0 +1,92 @@
+name: CI
+
+on:
+  push:
+    branches: [master, main]
+  pull_request:
+    branches: [master, main]
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  PYTHON_VERSION: "3.12"
+  NODE_VERSION: "22"
+
+jobs:
+  backend:
+    name: Backend
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+          cache: pip
+          cache-dependency-path: finance_bridge/requirements*.txt
+
+      - name: Install dependencies
+        run: pip install -r finance_bridge/requirements.txt -r finance_bridge/requirements-dev.txt
+
+      - name: Python syntax / compile check
+        run: |
+          python -m py_compile finance_bridge/app/main.py
+          python -m py_compile finance_bridge/app/config.py
+          python -m py_compile finance_bridge/app/storage/sqlite.py
+          python -c "
+          import pathlib, sys
+          failures = []
+          for f in sorted(pathlib.Path('finance_bridge').rglob('*.py')):
+              try: compile(open(f).read(), str(f), 'exec')
+              except SyntaxError as e: failures.append(str(e))
+          if failures:
+              for f in failures: print(f)
+              sys.exit(1)
+          print(f'OK: {len(list(pathlib.Path(\"finance_bridge\").rglob(\"*.py\")))} .py files compile cleanly')
+          "
+
+      - name: Ruff lint
+        run: |
+          pip install -q "ruff==0.16.2"
+          # 规则豁免清单见 finance_bridge/pyproject.toml 的 [tool.ruff.lint]。
+          # 此处必须真实拦截：违规即失败，不允许 || true。
+          ruff check finance_bridge/
+
+      - name: Run backend tests
+        run: python -m pytest tests/ -q --tb=short
+
+  frontend:
+    name: Frontend
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: npm
+          cache-dependency-path: report-web/package-lock.json
+
+      - name: Install dependencies
+        working-directory: report-web
+        run: npm ci
+
+      - name: TypeScript type check
+        working-directory: report-web
+        run: npx tsc --noEmit
+
+      - name: Unit tests
+        working-directory: report-web
+        run: npm test -- --run
+
+      - name: Build
+        working-directory: report-web
+        run: npm run build
+
+      - name: Enforce bundle budget
+        working-directory: report-web
+        run: npm run build:budget

@@ -1,0 +1,40 @@
+#!/usr/bin/env bash
+# backup-receive-wrapper — SSH forced command entry point.
+# Deployed on the BACKUP SERVER at /usr/local/bin/backup-receive-wrapper
+# Owned by root:root 0755. Source server cannot modify this file.
+#
+# Referenced in authorized_keys:
+#   from="源IP",command="/usr/local/bin/backup-receive-wrapper",no-pty,no-port-forwarding,no-agent-forwarding ssh-ed25519 AAAA...
+#
+# Parses SSH_ORIGINAL_COMMAND safely WITHOUT eval.
+set -euo pipefail
+
+# SSH_ORIGINAL_COMMAND is set by sshd when a forced command is configured
+ORIG="${SSH_ORIGINAL_COMMAND:-}"
+[ -n "$ORIG" ] || exit 1
+
+# Parse into tokens safely (no eval, no shell expansion)
+read -r CMD ARG1 ARG2 ARG3 ARG4 EXTRA <<< "$ORIG"
+
+# Command prefix must be exactly "backup-receive"
+[ "$CMD" = "backup-receive" ] || exit 1
+
+# Reject extra tokens beyond expected
+# put: backup-receive put <run-id> <filename> <sha256>  (4 args)
+# finalize: backup-receive finalize <run-id> <sha256>   (3 args)
+case "$ARG1" in
+  put)
+    [ -n "$ARG4" ] || exit 1      # need all 4 args
+    [ -z "$EXTRA" ] || exit 1     # no extra tokens
+    exec /usr/local/bin/backup-receive put "$ARG2" "$ARG3" "$ARG4"
+    ;;
+  finalize)
+    [ -n "$ARG3" ] || exit 1      # need 3 args
+    [ -z "$ARG4" ] || exit 1      # no 4th arg
+    [ -z "$EXTRA" ] || exit 1     # no extra tokens
+    exec /usr/local/bin/backup-receive finalize "$ARG2" "$ARG3"
+    ;;
+  *)
+    exit 1
+    ;;
+esac
