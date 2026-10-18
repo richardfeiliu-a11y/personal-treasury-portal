@@ -4,7 +4,8 @@
 # Owned by root:root 0755. Source server cannot modify this file.
 #
 # Referenced in authorized_keys:
-#   from="源IP",command="/usr/local/bin/backup-receive-wrapper",no-pty,no-port-forwarding,no-agent-forwarding ssh-ed25519 AAAA...
+#   from="203.0.113.10",command="/usr/local/bin/backup-receive-wrapper",no-pty,no-port-forwarding,no-agent-forwarding ssh-ed25519 AAAA...
+#   (203.0.113.10 为 RFC 5737 文档网段占位；部署时替换为备份源服务器的固定出口 IP)
 #
 # Parses SSH_ORIGINAL_COMMAND safely WITHOUT eval.
 set -euo pipefail

@@ -5,7 +5,7 @@
 set -euo pipefail
 
 UNIT_NAME="${1:-unknown}"
-STATE_DIR="${STATE_DIR:-/var/lib/personal-treasury-backup}"
+STATE_DIR="${STATE_DIR:-/var/lib/treasury-backup}"
 
 # Select state file based on unit name
 case "$UNIT_NAME" in

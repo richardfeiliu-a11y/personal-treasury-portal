@@ -1,8 +1,8 @@
 [Unit]
-Description=Daily backup timer
+Description=Daily encrypted offsite backup
 
 [Timer]
-OnCalendar=*-*-* 03:00:00 Asia/Shanghai
+OnCalendar=*-*-* 02:30:00 Europe/Berlin
 Persistent=true
 RandomizedDelaySec=300
 

@@ -98,9 +98,9 @@ def test_default_config_is_valid():
     """随仓库分发的示例配置必须能通过校验（各资产/负债分组均有代表账户）。"""
     cfg = load_account_groups()
     assert cfg.version == 1
-    assert cfg.group_for("7").key == "bank"      # Bank A
-    assert cfg.group_for("121").key == "consumer_credit"  # 信用钱包甲
-    assert cfg.group_for("126").key == "other_assets"     # 迁移清算 CNY
+    assert cfg.group_for("5103").key == "bank"      # Bank A
+    assert cfg.group_for("5211").key == "consumer_credit"  # 信用钱包甲
+    assert cfg.group_for("5113").key == "other_assets"     # 迁移清算 CNY
     # 资产/负债两侧分组标题齐全
     sides = {g.side for g in cfg.groups.values()}
     assert sides == {"asset", "liability"}

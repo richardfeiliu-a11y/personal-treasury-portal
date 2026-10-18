@@ -112,7 +112,7 @@ def _check_exec_entry(entry: dict[str, Any], spec: dict[str, Any],
     declared_exec = spec.get("exec") if entry["directive"] == "ExecStart" else spec.get("exec_post")
     if not entry["script_rel"]:
         # RV-08：清单已声明此入口必须运行仓库脚本，实际却指向声明根之外
-        # （如旧根 /opt/personal-erp）→ 错误根漂移，判 error。
+        # （如旧根 /srv/legacy-app）→ 错误根漂移，判 error。
         # 清单无声明的纯系统命令入口 → 仍 warn，不判错。
         if declared_exec:
             findings.append({"severity": "error", "kind": "exec_root_mismatch",

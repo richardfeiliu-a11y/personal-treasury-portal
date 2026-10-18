@@ -1,5 +1,5 @@
 [Unit]
-Description=Run Personal Treasury patrol every 6 hours (replaces retired watchdog timer)
+Description=Run patrol every 6 hours
 
 [Timer]
 OnCalendar=*-*-* 00/6:00:00 Europe/Berlin

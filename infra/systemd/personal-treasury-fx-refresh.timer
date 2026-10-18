@@ -1,14 +1,9 @@
 [Unit]
-Description=Run Personal Treasury FX refresh daily at 17:40 Europe/Berlin
+Description=Run ECB FX reference-rate refresh daily at 07:40 Europe/Berlin
 
-# AUD-26（2026-09-22）：触发时刻由 18:00 提前到 17:40 Berlin。
-# 原因（生产实测）：patrol 也是 18:00 Berlin 触发，两者同刻启动 —— 2026-09-22
-# 那次 refresh 于 18:00:41 失败，而 patrol 在 18:00:04 已读完 freshness，读到的
-# 必然是**刷新之前**的状态，于是当天判 OK。检测因此被推迟到下一个 patrol 周期
-# （最多 6 小时）。提前 20 分钟（远超 TimeoutStartSec=120 的上限）后，同一晚的
-# patrol 就能看到本轮结果。
 [Timer]
-OnCalendar=*-*-* 17:40:00 Europe/Berlin
+# 与整点巡检错开触发，避免两者同刻启动时巡检读到刷新前状态。
+OnCalendar=*-*-* 07:40:00 Europe/Berlin
 Persistent=true
 AccuracySec=1min
 Unit=personal-treasury-fx-refresh.service

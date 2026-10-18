@@ -12,10 +12,10 @@ REPO_ROOT="${REPO_ROOT:-$(cd "${SCRIPT_DIR}/../.." && pwd)}"
 : "${BACKUP_GPG_FINGERPRINT:?BACKUP_GPG_FINGERPRINT not set}"
 : "${BACKUP_REMOTE_HOST:?BACKUP_REMOTE_HOST not set}"
 : "${BACKUP_REMOTE_INBOX:?BACKUP_REMOTE_INBOX not set}"
-: "${BACKUP_LOCAL_DIR:=/var/backups/personal-treasury}"
+: "${BACKUP_LOCAL_DIR:=/var/backups/treasury}"
 : "${BACKUP_RETENTION_DAILY:=7}"
 : "${COMPOSE_FILE:=${REPO_ROOT}/infra/compose.yaml}"
-: "${STATE_DIR:=/var/lib/personal-treasury-backup}"
+: "${STATE_DIR:=/var/lib/treasury-backup}"
 
 # --- Constants ---
 RUN_ID="$(date +%Y%m%d_%H%M%S)"

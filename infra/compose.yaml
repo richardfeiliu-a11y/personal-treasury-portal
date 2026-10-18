@@ -178,7 +178,7 @@ services:
 
   # Cloudflare Tunnel：token 未配置前不启动（profile=tunnel），避免空 token 崩溃循环。
   # 在服务器写入 CLOUDFLARE_TUNNEL_TOKEN 后，用
-  #   docker compose -f /opt/personal-treasury/infra/compose.yaml --profile tunnel up -d cloudflared
+  #   docker compose -f /srv/treasury/infra/compose.yaml --profile tunnel up -d cloudflared
   # 启动（实施文档 §8）。
   cloudflared:
     image: cloudflare/cloudflared:2026.7.3@sha256:e39ee8da81ad5e05d77f38d2f51c60ca51bf2a8450ac3abab50c17fdb91d91bf

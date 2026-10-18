@@ -117,18 +117,18 @@ def _page(payload: list[dict], total_pages: int = 1) -> Response:
 
 
 ASSET_ACCOUNTS = [
-    {"id": "10", "attributes": {
+    {"id": "5110", "attributes": {
         "name": "Broker A", "type": "asset", "currency_code": "EUR",
         "current_balance": "100.00", "active": True, "include_net_worth": True,
     }},
-    {"id": "105", "attributes": {
+    {"id": "5105", "attributes": {
         "name": "银行甲存款", "type": "asset", "currency_code": "CNY",
         "current_balance": "1000.00", "active": True, "include_net_worth": True,
     }},
 ]
 
 LIABILITY_ACCOUNTS = [
-    {"id": "4", "attributes": {
+    {"id": "5201", "attributes": {
         "name": "Card A", "type": "liabilities", "currency_code": "EUR",
         "current_balance": "-30.00", "active": True, "include_net_worth": True,
     }},

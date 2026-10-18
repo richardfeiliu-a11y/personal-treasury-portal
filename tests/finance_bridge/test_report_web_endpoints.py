@@ -52,18 +52,18 @@ def _page(payload: list[dict], total_pages: int = 1) -> Response:
 
 
 ASSET_ACCOUNTS = [
-    {"id": "10", "attributes": {
+    {"id": "5110", "attributes": {
         "name": "Broker A", "type": "asset", "currency_code": "EUR",
         "current_balance": "100.00", "active": True, "include_net_worth": True,
     }},
-    {"id": "105", "attributes": {
+    {"id": "5105", "attributes": {
         "name": "银行甲存款", "type": "asset", "currency_code": "CNY",
         "current_balance": "1000.00", "active": True, "include_net_worth": True,
     }},
 ]
 
 LIABILITY_ACCOUNTS = [
-    {"id": "4", "attributes": {
+    {"id": "5201", "attributes": {
         "name": "Card A", "type": "liabilities", "currency_code": "EUR",
         "current_balance": "-30.00", "active": True, "include_net_worth": True,
     }},
@@ -110,7 +110,7 @@ class TestPersonalBalanceSheetEndpoint:
     def test_missing_rate_nulls_totals(self, client):
         """HKD 无汇率：fx_complete=false、总额 null、原币保留。"""
         respx.get(_accounts_url("asset", "2026-08-07")).mock(return_value=_page([
-            {"id": "9", "attributes": {
+            {"id": "5104", "attributes": {
                 "name": "Bank B", "type": "asset", "currency_code": "HKD",
                 "current_balance": "12000.25", "active": True, "include_net_worth": True,
             }},
@@ -192,7 +192,7 @@ class TestNetWorthTrendEndpoint:
         """单点缺汇率只影响该点。"""
         _seed_rates()
         respx.get(_accounts_url("asset", "2026-07-31")).mock(return_value=_page([
-            {"id": "9", "attributes": {
+            {"id": "5104", "attributes": {
                 "name": "Bank B", "type": "asset", "currency_code": "HKD",
                 "current_balance": "100.00", "active": True, "include_net_worth": True,
             }},

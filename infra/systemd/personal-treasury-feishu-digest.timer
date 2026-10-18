@@ -1,8 +1,8 @@
 [Unit]
-Description=Run Personal ERP Feishu digest daily at 18:00 Europe/Berlin
+Description=Run daily finance digest at 08:15 Europe/Berlin
 
 [Timer]
-OnCalendar=*-*-* 18:00:00 Europe/Berlin
+OnCalendar=*-*-* 08:15:00 Europe/Berlin
 Persistent=true
 
 [Install]

@@ -70,9 +70,9 @@ if [ "$1" = "inspect" ]; then
     if [ "$target" = "personal-treasury-bridge-1" ]; then
         echo "$CURRENT_CONTAINER_IMG"
         exit 0
-    elif [ "$target" = "personal-treasury-bridge:rollback-3d1564d" ]; then
-        if grep -q "^personal-treasury-bridge:rollback-3d1564d=" "{docker_state_file}" 2>/dev/null; then
-            grep "^personal-treasury-bridge:rollback-3d1564d=" "{docker_state_file}" | cut -d'=' -f2
+    elif [ "$target" = "personal-treasury-bridge:rollback-example" ]; then
+        if grep -q "^personal-treasury-bridge:rollback-example=" "{docker_state_file}" 2>/dev/null; then
+            grep "^personal-treasury-bridge:rollback-example=" "{docker_state_file}" | cut -d'=' -f2
             exit 0
         else
             exit 1
@@ -100,27 +100,27 @@ exit 0
     env["FAIL_TAG"] = "1"
 
     # 1. Simulate interruption: docker tag fails on initial run
-    res1 = run_ops(["backup_image", "bridge", "personal-treasury-bridge-1", "bridge", "personal-treasury-bridge:rollback-3d1564d"], env)
+    res1 = run_ops(["backup_image", "bridge", "personal-treasury-bridge-1", "bridge", "personal-treasury-bridge:rollback-example"], env)
     assert res1.returncode != 0, f"Expected initial tag failure, got returncode 0: {res1.stderr}"
     assert (manifest_dir / "bridge_image.id").read_text().strip() == "sha256:ORIGINAL_BRIDGE_ID"
-    assert not docker_state_file.exists() or "rollback-3d1564d" not in docker_state_file.read_text()
+    assert not docker_state_file.exists() or "rollback-example" not in docker_state_file.read_text()
 
     # 2. Container changes to NEW_RELEASE before re-run
     env["CURRENT_CONTAINER_IMG"] = "sha256:NEW_RELEASE_BRIDGE_ID"
     env["FAIL_TAG"] = "0"
 
     # 3. Re-run: Must NOT use NEW_RELEASE; must detect missing tag and repair using locked ORIGINAL_BRIDGE_ID
-    res2 = run_ops(["backup_image", "bridge", "personal-treasury-bridge-1", "bridge", "personal-treasury-bridge:rollback-3d1564d"], env)
+    res2 = run_ops(["backup_image", "bridge", "personal-treasury-bridge-1", "bridge", "personal-treasury-bridge:rollback-example"], env)
     assert res2.returncode == 0, f"Re-run repair failed: {res2.stderr}"
     assert "Repairing rollback tag strictly from locked image ID" in res2.stderr
 
     # Verify state: tag points to ORIGINAL, not NEW_RELEASE
     state = docker_state_file.read_text()
-    assert "personal-treasury-bridge:rollback-3d1564d=sha256:ORIGINAL_BRIDGE_ID" in state, f"Tag pointed to wrong image: {state}"
+    assert "personal-treasury-bridge:rollback-example=sha256:ORIGINAL_BRIDGE_ID" in state, f"Tag pointed to wrong image: {state}"
     assert (manifest_dir / "bridge_image.id").read_text().strip() == "sha256:ORIGINAL_BRIDGE_ID"
 
     # 4. Third run: tag exists and matches locked ID -> verify and skip
-    res3 = run_ops(["backup_image", "bridge", "personal-treasury-bridge-1", "bridge", "personal-treasury-bridge:rollback-3d1564d"], env)
+    res3 = run_ops(["backup_image", "bridge", "personal-treasury-bridge-1", "bridge", "personal-treasury-bridge:rollback-example"], env)
     assert res3.returncode == 0
     assert "already locked and verified" in res3.stderr
 
@@ -193,7 +193,7 @@ exit 0
     d_log = docker_log.read_text()
     # Tagging must directly use locked ID sha256:ORIGINAL_WEB_ID
     assert "tag sha256:ORIGINAL_WEB_ID personal-treasury-report-web:latest" in d_log, f"Did not tag from locked ID: {d_log}"
-    assert "compose -f /opt/personal-treasury/infra/compose.yaml up -d --no-build --no-deps report-web" in d_log
+    assert "compose -f /srv/treasury/infra/compose.yaml up -d --no-build --no-deps report-web" in d_log
     assert "bridge" not in d_log
 
     # Verify container running image was verified to be sha256:ORIGINAL_WEB_ID

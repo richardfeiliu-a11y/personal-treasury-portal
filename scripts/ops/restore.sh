@@ -57,7 +57,7 @@ docker compose -f "$COMPOSE_FILE" exec -T db mysql \
 
 # Restore Bridge SQLite (into Docker volume, WAL-safe)
 BACKUP_BASE=$(basename "$BACKUP_FILE" | sed 's/firefly_//' | sed 's/.sql.gz//')
-BRIDGE_BACKUP="/var/backups/personal-treasury/bridge_${BACKUP_BASE}.db"
+BRIDGE_BACKUP="/var/backups/treasury/bridge_${BACKUP_BASE}.db"
 if [ -f "$BRIDGE_BACKUP" ]; then
     echo "[$(date)] Restoring Bridge SQLite..."
     # Verify backup integrity before restoring

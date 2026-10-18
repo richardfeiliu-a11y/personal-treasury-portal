@@ -1,5 +1,5 @@
 [Unit]
-Description=Personal ERP daily backup
+Description=Personal Treasury daily backup
 Requires=docker.service
 After=docker.service network-online.target
 Wants=network-online.target
@@ -7,11 +7,11 @@ OnFailure=personal-treasury-backup-alert@%n.service
 
 [Service]
 Type=oneshot
-WorkingDirectory=/opt/personal-treasury
-Environment=REPO_ROOT=/opt/personal-treasury
-EnvironmentFile=/etc/personal-treasury/backup.env
-ExecStart=/usr/bin/flock -n /run/lock/personal-treasury-backup.lock /opt/personal-treasury/scripts/ops/backup.sh
+WorkingDirectory=/srv/treasury
+Environment=REPO_ROOT=/srv/treasury
+EnvironmentFile=/etc/treasury/backup.env
+ExecStart=/usr/bin/flock -n /run/lock/treasury-backup.lock /srv/treasury/scripts/ops/backup.sh
 UMask=0077
 TimeoutStartSec=30min
-StateDirectory=personal-treasury-backup
+StateDirectory=treasury-backup
 StateDirectoryMode=0700

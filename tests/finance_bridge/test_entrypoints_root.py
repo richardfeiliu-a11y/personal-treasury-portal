@@ -1,7 +1,7 @@
 """RV-08：入口检查器对旧仓库根路径必须失败（不能只警告返回 CLEAN）。
 
 清单已声明某入口必须运行仓库脚本（exec/exec_post），实际 unit 指向声明
-根之外（如旧根 /opt/personal-erp）→ error + exit 1。
+根之外（如旧根 /srv/legacy-app）→ error + exit 1。
 确属系统命令的入口（清单无 exec 声明）→ 仍 warn，不判错。
 """
 from __future__ import annotations
@@ -24,9 +24,9 @@ def _write(path: Path, content: str) -> None:
 def test_wrong_repo_root_is_error(tmp_path: Path):
     """RV-08 复现：清单声明 exec，实际指向旧根 → error + exit 1。"""
     _write(tmp_path / "infra/systemd/x.service",
-           "[Service]\nExecStart=/usr/bin/python3.11 /opt/personal-erp/scripts/tools/feishu_digest.py\n")
+           "[Service]\nExecStart=/usr/bin/python3 /srv/legacy-app/scripts/tools/feishu_digest.py\n")
     manifest = tmp_path / "m.json"
-    manifest.write_text(json.dumps({"repo_root": "/opt/personal-treasury",
+    manifest.write_text(json.dumps({"repo_root": "/srv/treasury",
                                     "units": {"x.service": {"exec": "scripts/tools/feishu_digest.py"}}}))
     code, findings = checker.run_check(manifest, tmp_path)
     assert code == 1
@@ -38,10 +38,10 @@ def test_wrong_repo_root_exec_post_is_error(tmp_path: Path):
     """RV-08：ExecStartPost 错根同样 error。"""
     _write(tmp_path / "infra/systemd/x.service",
            "[Service]\n"
-           "ExecStart=/usr/bin/python3.11 /opt/personal-treasury/scripts/tools/feishu_digest.py\n"
-           "ExecStartPost=/usr/bin/python3.11 /opt/personal-erp/scripts/tools/deliver_feishu_digest.py\n")
+           "ExecStart=/usr/bin/python3 /srv/treasury/scripts/tools/feishu_digest.py\n"
+           "ExecStartPost=/usr/bin/python3 /srv/legacy-app/scripts/tools/deliver_feishu_digest.py\n")
     manifest = tmp_path / "m.json"
-    manifest.write_text(json.dumps({"repo_root": "/opt/personal-treasury",
+    manifest.write_text(json.dumps({"repo_root": "/srv/treasury",
                                     "units": {"x.service": {
                                         "exec": "scripts/tools/feishu_digest.py",
                                         "exec_post": "scripts/tools/deliver_feishu_digest.py"}}}))
@@ -56,7 +56,7 @@ def test_undeclared_system_command_stays_warn(tmp_path: Path):
     _write(tmp_path / "infra/systemd/y.service",
            "[Service]\nExecStart=/usr/bin/systemctl restart foo\n")
     manifest = tmp_path / "m.json"
-    manifest.write_text(json.dumps({"repo_root": "/opt/personal-treasury",
+    manifest.write_text(json.dumps({"repo_root": "/srv/treasury",
                                     "units": {"y.service": {}}}))
     code, findings = checker.run_check(manifest, tmp_path)
     assert code == 0

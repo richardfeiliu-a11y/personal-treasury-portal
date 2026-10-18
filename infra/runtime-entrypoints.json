@@ -1,30 +1,30 @@
 {
-  "_comment": "脱敏部署清单（WP03）：记录外部消费者期望的运行时入口，供 check_runtime_entrypoints.py 只读校验。不含凭据/令牌/主机名。repo_root 为生产部署根（unit 文件内的绝对路径前缀）。生产侧实际安装状态（systemctl list-timers / 已安装 unit）由受控应用与 WP12 批次报告核对。 2026-09-22（AUD-27）：补登 personal-treasury-fx-refresh（原仅存在于生产，致漂移检查器看不到该任务）与已退役的 watchdog。 2026-09-22（AUD-27）：补登 personal-treasury-fx-refresh（原仅存在于生产，致漂移检查器对该任务失明）；新增 retired_units 段登记已退役但仍装在生产的 watchdog，与「未登记」显式区分。",
-  "repo_root": "/opt/personal-treasury",
-  "interpreter_default": "/usr/bin/python3.11",
+  "_comment": "运行时入口清单（示例部署）：记录外部消费者期望的运行时入口，供 scripts/tools/check_runtime_entrypoints.py 只读校验。不含凭据/令牌/主机名。repo_root 为部署根（unit 文件内绝对路径前缀），部署时按需替换。生产侧的实际安装状态（systemctl list-timers / 已安装 unit）应由巡检流程另行核对。",
+  "repo_root": "/srv/treasury",
+  "interpreter_default": "/usr/bin/python3",
   "units": {
     "personal-treasury-feishu-digest.service": {
       "timer": "personal-treasury-feishu-digest.timer",
-      "on_calendar": "*-*-* 18:00:00 Europe/Berlin",
+      "on_calendar": "*-*-* 08:15:00 Europe/Berlin",
       "exec": "scripts/tools/feishu_digest.py",
       "exec_post": "scripts/tools/deliver_feishu_digest.py",
-      "note": "D01 唯一日报调度入口；生成+投递两步（ExecStartPost 串联）"
+      "note": "日报调度入口示例；生成+投递两步（ExecStartPost 串联）"
     },
     "personal-treasury-patrol.service": {
       "timer": "personal-treasury-patrol.timer",
       "on_calendar": "*-*-* 00/6:00:00 Europe/Berlin",
       "exec": "scripts/ops/health-check.sh",
-      "note": "D02 唯一巡检入口；受控应用时替代并停用生产旧 watchdog timer"
+      "note": "巡检入口；替代旧 watchdog timer（新旧不同时启用）"
     },
     "personal-treasury-backup.service": {
       "timer": "personal-treasury-backup.timer",
-      "on_calendar": "*-*-* 03:00:00 Asia/Shanghai",
+      "on_calendar": "*-*-* 02:30:00 Europe/Berlin",
       "exec": "scripts/ops/backup.sh",
       "note": "ExecStart 经 flock -n 包装"
     },
     "personal-treasury-backup-stalecheck.service": {
       "timer": "personal-treasury-backup-stalecheck.timer",
-      "on_calendar": "*-*-* 00,06,12,18:00:00 Asia/Shanghai",
+      "on_calendar": "*-*-* 00,06,12,18:00:00 Europe/Berlin",
       "exec": "scripts/ops/stalecheck.sh"
     },
     "personal-treasury-backup-alert@.service": {
@@ -33,15 +33,15 @@
     },
     "personal-treasury-fx-refresh.service": {
       "timer": "personal-treasury-fx-refresh.timer",
-      "on_calendar": "*-*-* 17:40:00 Europe/Berlin",
+      "on_calendar": "*-*-* 07:40:00 Europe/Berlin",
       "exec_container_module": "finance_bridge.scripts.refresh_fx_rates",
-      "note": "ECB 汇率刷新（AUD-27 入仓）。原仅存在于生产 /etc/systemd/system，未登记导致 check_runtime_entrypoints 看不到它；2026-09-22 曾静默失败（审计 F-00）。入口为 bridge 容器内模块，非仓库脚本路径，故不声明 exec。；触发时刻 17:40 Berlin（AUD-26：避开与 patrol 的 18:00 同刻竞态）"
+      "note": "ECB 汇率刷新；入口为 bridge 容器内模块，非仓库脚本路径，故不声明 exec。触发时刻与整点巡检错开，避免同刻启动的竞态。"
     }
   },
   "external_consumers": {
-    "hermes_mcp_personal_finance": {
+    "chat_agent_finance_mcp": {
       "script": "finance_bridge/mcp_server.py",
-      "note": "Hermes config 引用（R01：生产 args 曾指向旧目录，待受控修正）"
+      "note": "聊天助手 Agent 经 MCP 接入（stdio）"
     },
     "firefly_cron_container": {
       "script": null,
@@ -51,8 +51,8 @@
   "retired_units": {
     "personal-treasury-watchdog.service": {
       "timer": "personal-treasury-watchdog.timer",
-      "on_calendar": "*-*-* 00,06,12,18:05:00 Asia/Shanghai",
-      "note": "已退役（D02：职责并入 patrol）。生产仍安装但 timer disabled，仓库刻意不再保留 unit 文件。登记于此以区分「有意退役」与「忘记登记」；host 侧卸载属独立生产动作"
+      "on_calendar": "*-*-* 00,06,12,18:05:00 Europe/Berlin",
+      "note": "退役 unit 示例：职责并入 patrol。仓库刻意不保留其 unit 文件；登记于此以区分「有意退役」与「忘记登记」，卸载属独立的运维动作。"
     }
   }
 }

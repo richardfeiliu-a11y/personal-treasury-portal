@@ -68,10 +68,10 @@ def test_trend_points_with_rates(temp_storage):
     def fetch(point_date: str):
         # 7 月末余额 100 EUR，8 月 100 EUR + 50 CNY 负债
         if point_date <= "2026-07-31":
-            return [_acct("10", "asset", "EUR", "100.00")]
+            return [_acct("5110", "asset", "EUR", "100.00")]
         return [
-            _acct("10", "asset", "EUR", "100.00"),
-            _acct("4", "liabilities", "CNY", "-50.00"),
+            _acct("5110", "asset", "EUR", "100.00"),
+            _acct("5201", "liabilities", "CNY", "-50.00"),
         ]
 
     points = compute_net_worth_trend("2026-08-07", 2, "CNY", fetch, repo)
@@ -90,8 +90,8 @@ def test_single_point_fx_incomplete_does_not_fail_curve(temp_storage):
 
     def fetch(point_date: str):
         if point_date == "2026-07-31":
-            return [_acct("9", "asset", "HKD", "100.00")]  # 该点缺汇率
-        return [_acct("10", "asset", "EUR", "100.00")]
+            return [_acct("5104", "asset", "HKD", "100.00")]  # 该点缺汇率
+        return [_acct("5110", "asset", "EUR", "100.00")]
 
     points = compute_net_worth_trend("2026-08-07", 2, "CNY", fetch, repo)
     assert points[0]["fx_complete"] is False
@@ -119,11 +119,11 @@ def test_trend_excludes_include_net_worth_false_accounts(temp_storage):
     repo.upsert_market("EUR", "8.0", "2026-06-01")
 
     accounts = [
-        {"id": "10", "attributes": {
+        {"id": "5110", "attributes": {
             "name": "Broker A", "type": "asset", "currency_code": "EUR",
             "current_balance": "100.00", "active": True, "include_net_worth": True,
         }},
-        {"id": "126", "attributes": {
+        {"id": "5113", "attributes": {
             "name": "迁移清算 · CNY", "type": "asset", "currency_code": "CNY",
             "current_balance": "1000.00", "active": False, "include_net_worth": False,
         }},
@@ -150,11 +150,11 @@ def test_trend_liability_display_positive_when_net_positive(temp_storage):
     def fetch(point_date: str):
         # 该历史点负债账户余额为正（如还款溢缴），展示应为其绝对值之和
         return [
-            {"id": "10", "attributes": {
+            {"id": "5110", "attributes": {
                 "name": "Broker A", "type": "asset", "currency_code": "EUR",
                 "current_balance": "100.00", "active": True, "include_net_worth": True,
             }},
-            {"id": "4", "attributes": {
+            {"id": "5201", "attributes": {
                 "name": "Card A", "type": "liabilities", "currency_code": "EUR",
                 "current_balance": "50.00", "active": True, "include_net_worth": True,
             }},
@@ -172,7 +172,7 @@ def test_cache_hits_second_call_and_key_includes_params(temp_storage, monkeypatc
 
     def fetch(point_date: str):
         calls["n"] += 1
-        return [_acct("10", "asset", "EUR", "100.00")]
+        return [_acct("5110", "asset", "EUR", "100.00")]
 
     # REL-04：键含 Berlin 业务日第 5 元，钉住业务日才能观察 TTL 内的命中
     monkeypatch.setattr(net_worth_trend, "business_today", lambda: "2026-09-19")
@@ -206,7 +206,7 @@ def test_cache_misses_after_business_day_rolls_over(temp_storage, monkeypatch):
 
     def fetch(point_date: str):
         calls["n"] += 1
-        return [_acct("10", "asset", "EUR", "100.00")]
+        return [_acct("5110", "asset", "EUR", "100.00")]
 
     monkeypatch.setattr(net_worth_trend, "business_today", lambda: day["v"])
 

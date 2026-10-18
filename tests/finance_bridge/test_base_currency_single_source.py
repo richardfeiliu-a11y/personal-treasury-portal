@@ -84,7 +84,7 @@ def test_balance_sheet_passes_configured_base_to_unified_aggregate(
 
     monkeypatch.setattr(hermes_balance_sheet, "value_personal_scope", spy)
     hermes = compute_balance_sheet(
-        [_acct("10", "Broker A", "asset", "USD", "100.00")], AS_OF, FXRateRepository(temp_storage)
+        [_acct("5110", "Broker A", "asset", "USD", "100.00")], AS_OF, FXRateRepository(temp_storage)
     )
 
     assert calls == [CONFIGURED_BASE], (

@@ -194,7 +194,7 @@ echo "[FX Freshness]"
 # 消费 Bridge 数据面健康检查的 fx_freshness 项（阈值语义与
 # 处置见 docs/operations/runbook.md「汇率库新鲜度检查」）。
 # /v1/* 路径需内部 token（Bridge main.py 认证中间件）；生产 unit 经
-# EnvironmentFile=feishu-digest.env 提供。本地/开发通常无 token —— 显式
+# EnvironmentFile=digest.env 提供。本地/开发通常无 token —— 显式
 # NOTE 跳过（同 record_patrol_outcome 先例），不冒充核验也不误报 FAIL。
 if [ -z "${BRIDGE_INTERNAL_TOKEN:-}" ]; then
     echo "  NOTE: BRIDGE_INTERNAL_TOKEN 未设置，跳过 fx_freshness 消费（生产 unit 经 EnvironmentFile 提供）"
@@ -343,7 +343,7 @@ echo "[Swap]"
 swapon --show 2>/dev/null || echo "  No swap configured"
 
 # WP04 记录源：巡检结果 best-effort 记入 Bridge 任务注册表
-# （需要 BRIDGE_INTERNAL_TOKEN/BRIDGE_BASE_URL，由 feishu-digest.env 提供）；
+# （需要 BRIDGE_INTERNAL_TOKEN/BRIDGE_BASE_URL，由 digest.env 提供）；
 # 记录失败不影响巡检退出码。
 record_patrol_outcome() {
     if [ -z "${BRIDGE_INTERNAL_TOKEN:-}" ]; then

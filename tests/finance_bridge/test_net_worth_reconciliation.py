@@ -113,12 +113,12 @@ def _assert_faces_agree(hermes, scope, portal, *, check_fx_complete: bool = True
 # -------------------------------------------------------------------
 
 MULTI_CURRENCY_ACCOUNTS = [
-    _acct("105", "银行甲存款", "asset", "CNY", "100000.00"),
-    _acct("10", "Broker A", "asset", "USD", "12345.67"),
-    _acct("7", "Bank A", "asset", "USD", "987.65"),
-    _acct("9", "Bank B", "asset", "EUR", "10000.01"),
-    _acct("4", "Card A", "liabilities", "EUR", "-12345.67"),
-    _acct("5", "银行甲消费贷", "liabilities", "USD", "-1000.00"),
+    _acct("5105", "银行甲存款", "asset", "CNY", "100000.00"),
+    _acct("5110", "Broker A", "asset", "USD", "12345.67"),
+    _acct("5103", "Bank A", "asset", "USD", "987.65"),
+    _acct("5104", "Bank B", "asset", "EUR", "10000.01"),
+    _acct("5201", "Card A", "liabilities", "EUR", "-12345.67"),
+    _acct("5210", "银行甲消费贷", "liabilities", "USD", "-1000.00"),
 ]
 
 
@@ -244,9 +244,9 @@ def test_pure_negative_liabilities_match_before_and_after(repo, groups):
 
 def test_include_net_worth_false_excluded_from_both_faces(repo, groups):
     accounts = [
-        _acct("105", "银行甲存款", "asset", "CNY", "1000.00"),
-        _acct("126", "迁移清算 · CNY", "asset", "CNY", "1000.00", include_net_worth=False),
-        _acct("10", "Broker A", "liabilities", "USD", "-500.00", include_net_worth=False),
+        _acct("5105", "银行甲存款", "asset", "CNY", "1000.00"),
+        _acct("5113", "迁移清算 · CNY", "asset", "CNY", "1000.00", include_net_worth=False),
+        _acct("5110", "Broker A", "liabilities", "USD", "-500.00", include_net_worth=False),
     ]
     hermes, scope, portal = _three_faces(accounts, repo, groups)
     _assert_faces_agree(hermes, scope, portal)
@@ -258,7 +258,7 @@ def test_include_net_worth_false_excluded_from_both_faces(repo, groups):
     assert hermes.summary["account_stats"]["excluded_include_net_worth_false"] == 2
     assert portal["summary"]["included_account_count"] == 1
     displayed = {a["id"] for g in portal["groups"] for a in g["accounts"]}
-    assert displayed == {"105"}
+    assert displayed == {"5105"}
 
 
 @pytest.mark.parametrize("flag", [0, None], ids=["falsy-zero", "falsy-none"])
@@ -271,8 +271,8 @@ def test_falsy_include_net_worth_flag_excluded_on_both_faces(repo, groups, flag)
     同一响应自相矛盾（实测 行相加 5100 vs 总额 100）。
     """
     accounts = [
-        _acct("105", "银行甲存款", "asset", "CNY", "100.00"),
-        _acct("126", "迁移清算 · CNY", "asset", "CNY", "5000.00", include_net_worth=flag),
+        _acct("5105", "银行甲存款", "asset", "CNY", "100.00"),
+        _acct("5113", "迁移清算 · CNY", "asset", "CNY", "5000.00", include_net_worth=flag),
     ]
     hermes, scope, portal = _three_faces(accounts, repo, groups)
     _assert_faces_agree(hermes, scope, portal)
@@ -282,7 +282,7 @@ def test_falsy_include_net_worth_flag_excluded_on_both_faces(repo, groups, flag)
     assert [(r.currency, r.amount) for r in hermes.sections[0].rows] == [("CNY", "100")]
     assert hermes.summary["account_stats"]["excluded_include_net_worth_false"] == 1
     displayed = {a["id"] for g in portal["groups"] for a in g["accounts"]}
-    assert displayed == {"105"}
+    assert displayed == {"5105"}
 
 
 # -------------------------------------------------------------------
@@ -292,7 +292,7 @@ def test_falsy_include_net_worth_flag_excluded_on_both_faces(repo, groups, flag)
 def test_missing_rate_nulls_totals_on_both_faces(repo, groups):
     accounts = [
         _acct("90006", "外币钱包", "asset", "HKD", "12000.25"),
-        _acct("105", "银行甲存款", "asset", "CNY", "100.00"),
+        _acct("5105", "银行甲存款", "asset", "CNY", "100.00"),
         _acct("90001", "信用卡", "liabilities", "HKD", "-50.00"),
     ]
     hermes, scope, portal = _three_faces(accounts, repo, groups)
@@ -322,7 +322,7 @@ def test_zero_aggregate_currency_without_rate_does_not_null_totals(repo, groups)
     accounts = [
         _acct("90007", "多头", "asset", "ISK", "100.00"),
         _acct("90008", "空头", "asset", "ISK", "-100.00"),
-        _acct("105", "银行甲存款", "asset", "CNY", "500.00"),
+        _acct("5105", "银行甲存款", "asset", "CNY", "500.00"),
     ]
     hermes, scope, portal = _three_faces(accounts, repo, groups)
     # 门户面的 fx_complete 仍按**账户行**严格（行级折算不出即为 false），
@@ -381,28 +381,28 @@ def test_order_of_aggregation_is_a_single_point(repo, groups):
 FF = "http://localhost:18080/api/v1"
 
 EP_ASSETS = [
-    {"id": "105", "attributes": {
+    {"id": "5105", "attributes": {
         "name": "银行甲存款", "type": "asset", "currency_code": "CNY",
         "current_balance": "100000.00", "active": True, "include_net_worth": True}},
-    {"id": "10", "attributes": {
+    {"id": "5110", "attributes": {
         "name": "Broker A", "type": "asset", "currency_code": "USD",
         "current_balance": "12345.67", "active": True, "include_net_worth": True}},
-    {"id": "7", "attributes": {
+    {"id": "5103", "attributes": {
         "name": "Bank A", "type": "asset", "currency_code": "USD",
         "current_balance": "987.65", "active": True, "include_net_worth": True}},
-    {"id": "9", "attributes": {
+    {"id": "5104", "attributes": {
         "name": "Bank B", "type": "asset", "currency_code": "EUR",
         "current_balance": "10000.01", "active": True, "include_net_worth": True}},
-    {"id": "126", "attributes": {
+    {"id": "5113", "attributes": {
         "name": "迁移清算 · CNY", "type": "asset", "currency_code": "CNY",
         "current_balance": "1000.00", "active": True, "include_net_worth": False}},
 ]
 
 EP_LIABILITIES = [
-    {"id": "4", "attributes": {
+    {"id": "5201", "attributes": {
         "name": "Card A", "type": "liabilities", "currency_code": "EUR",
         "current_balance": "-12345.67", "active": True, "include_net_worth": True}},
-    {"id": "5", "attributes": {
+    {"id": "5210", "attributes": {
         "name": "银行甲消费贷", "type": "liabilities", "currency_code": "USD",
         "current_balance": "-1000.00", "active": True, "include_net_worth": True}},
 ]

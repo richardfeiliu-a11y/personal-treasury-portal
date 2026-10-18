@@ -16,7 +16,7 @@
      不自动重发，等待人工核查
      （人工确认送达后按 runbook 处置状态文件；禁止盲目重发造成重复日报）
 
-环境变量（只读名称，值由 /etc/personal-treasury/feishu-digest.env 提供）：
+环境变量（只读名称，值由 /etc/treasury/digest.env 提供）：
   HERMES_BIN          hermes 可执行文件绝对路径（必需）
   DIGEST_STATE_DIR    状态目录（默认 /var/lib/personal-treasury-digest）
   FEISHU_DIGEST_CHANNEL  目标渠道标识（默认 feishu）

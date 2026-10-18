@@ -24,7 +24,7 @@ REPO_ROOT="${REPO_ROOT:-$(cd "${SCRIPT_DIR}/../.." && pwd)}"
 # --- Configuration ---
 : "${RESTORE_SSH_HOST:=restore-server}"
 : "${COMPOSE_FILE:=${REPO_ROOT}/infra/compose.yaml}"
-REPORT_DIR="/var/lib/personal-treasury-backup/drill-reports"
+REPORT_DIR="/var/lib/treasury-backup/drill-reports"
 
 # --- Constants ---
 DRILL_ID="erp-drill-$(date +%Y%m%d%H%M%S)-$$"

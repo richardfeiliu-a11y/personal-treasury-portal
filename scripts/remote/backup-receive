@@ -9,7 +9,7 @@
 set -euo pipefail
 
 ACTION="${1:-}"
-INBOX="/var/backups/personal-treasury/inbox"
+INBOX="/var/backups/treasury/inbox"
 MAX_FILE_SIZE=524288000  # 500MB
 
 case "$ACTION" in

@@ -33,8 +33,8 @@ Description=clean unit
 
 [Service]
 Type=oneshot
-ExecStart=/usr/bin/python3.11 {repo_root}/scripts/tools/feishu_digest.py
-ExecStartPost=/usr/bin/python3.11 {repo_root}/scripts/tools/deliver_feishu_digest.py
+ExecStart=/usr/bin/python3 {repo_root}/scripts/tools/feishu_digest.py
+ExecStartPost=/usr/bin/python3 {repo_root}/scripts/tools/deliver_feishu_digest.py
 """
 
 UNIT_DRIFT = """\

@@ -2,7 +2,7 @@
 Description=Backup staleness check timer
 
 [Timer]
-OnCalendar=*-*-* 00,06,12,18:00:00 Asia/Shanghai
+OnCalendar=*-*-* 00,06,12,18:00:00 Europe/Berlin
 Persistent=true
 
 [Install]

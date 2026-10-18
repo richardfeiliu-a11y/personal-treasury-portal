@@ -23,13 +23,13 @@ set -euo pipefail
 # ------------------------------------------------------------------------------
 # 环境变量与路径配置（支持演练环境注入隔离路径与 Mock 二进制）
 # ------------------------------------------------------------------------------
-MANIFEST_DIR="${MANIFEST_DIR:-/var/backups/personal-treasury/release_3d1564d}"
-REPO_DIR="${REPO_DIR:-/opt/personal-treasury}"
+MANIFEST_DIR="${MANIFEST_DIR:-/var/backups/treasury/release_example}"
+REPO_DIR="${REPO_DIR:-/srv/treasury}"
 HERMES_CONFIG="${HERMES_CONFIG:-/root/.hermes/config.yaml}"
-HERMES_BACKUP_DIR="${HERMES_BACKUP_DIR:-/root/.hermes/backups_release_3d1564d}"
+HERMES_BACKUP_DIR="${HERMES_BACKUP_DIR:-/root/.hermes/backups_release_example}"
 SYSTEMD_DIR="${SYSTEMD_DIR:-/etc/systemd/system}"
 DOCKER_BIN="${DOCKER_BIN:-docker}"
-COMPOSE_FILE="${COMPOSE_FILE:-/opt/personal-treasury/infra/compose.yaml}"
+COMPOSE_FILE="${COMPOSE_FILE:-/srv/treasury/infra/compose.yaml}"
 SYSTEMCTL_BIN="${SYSTEMCTL_BIN:-systemctl}"
 GIT_BIN="${GIT_BIN:-git}"
 

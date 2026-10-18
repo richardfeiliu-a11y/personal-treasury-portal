@@ -4,7 +4,7 @@
 # Designed to run under systemd timer every 6 hours.
 set -Eeuo pipefail
 
-STATE_DIR="${STATE_DIR:-/var/lib/personal-treasury-backup}"
+STATE_DIR="${STATE_DIR:-/var/lib/treasury-backup}"
 LAST_SUCCESS_FILE="${STATE_DIR}/last_success"
 MAX_AGE_HOURS=36
 
